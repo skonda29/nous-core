@@ -56,6 +56,161 @@ interface AnthropicSystemSegment {
   cache_control?: { type: 'ephemeral' };
 }
 
+const TOP_LEVEL_COMBINATOR_KEYS = ['oneOf', 'anyOf', 'allOf'] as const;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function asStringArray(value: unknown): string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === 'string')
+    ? value
+    : [];
+}
+
+function uniqueStrings(values: readonly string[]): string[] {
+  return Array.from(new Set(values));
+}
+
+function uniqueUnknown(values: readonly unknown[]): unknown[] {
+  const seen = new Set<string>();
+  const result: unknown[] = [];
+  for (const value of values) {
+    const key = JSON.stringify(value);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(value);
+  }
+  return result;
+}
+
+function enumValues(schema: Record<string, unknown>): unknown[] {
+  if (Array.isArray(schema.enum)) return schema.enum;
+  if (Object.prototype.hasOwnProperty.call(schema, 'const')) return [schema.const];
+  return [];
+}
+
+function mergePropertySchema(
+  existing: unknown,
+  incoming: unknown,
+): unknown {
+  if (!isRecord(existing)) return incoming;
+  if (!isRecord(incoming)) return existing;
+
+  const existingEnums = enumValues(existing);
+  const incomingEnums = enumValues(incoming);
+  if (existingEnums.length > 0 || incomingEnums.length > 0) {
+    const merged = { ...existing, ...incoming };
+    delete merged.const;
+    merged.enum = uniqueUnknown([...existingEnums, ...incomingEnums]);
+    if (existing.type && !incoming.type) merged.type = existing.type;
+    return merged;
+  }
+
+  return { ...existing, ...incoming };
+}
+
+function commonRequired(requiredSets: readonly string[][]): string[] {
+  if (requiredSets.length === 0) return [];
+  return requiredSets.slice(1).reduce(
+    (common, required) => common.filter((name) => required.includes(name)),
+    [...requiredSets[0]],
+  );
+}
+
+function flattenTopLevelCombinators(
+  schema: Record<string, unknown>,
+): { schema: Record<string, unknown>; flattened: boolean } {
+  const combinatorEntries = TOP_LEVEL_COMBINATOR_KEYS
+    .map((key) => [key, schema[key]] as const)
+    .filter((entry): entry is readonly [typeof TOP_LEVEL_COMBINATOR_KEYS[number], unknown[]] =>
+      Array.isArray(entry[1]),
+    );
+
+  if (combinatorEntries.length === 0) {
+    return { schema, flattened: false };
+  }
+
+  const normalized: Record<string, unknown> = { ...schema };
+  for (const key of TOP_LEVEL_COMBINATOR_KEYS) {
+    delete normalized[key];
+  }
+
+  const properties: Record<string, unknown> = isRecord(normalized.properties)
+    ? { ...normalized.properties }
+    : {};
+  const anyOfRequiredSets: string[][] = [];
+  const allOfRequired: string[] = [];
+
+  for (const [key, branches] of combinatorEntries) {
+    for (const branch of branches) {
+      if (!isRecord(branch)) continue;
+
+      if (isRecord(branch.properties)) {
+        for (const [propertyName, propertySchema] of Object.entries(branch.properties)) {
+          properties[propertyName] = propertyName in properties
+            ? mergePropertySchema(properties[propertyName], propertySchema)
+            : propertySchema;
+        }
+      }
+
+      const required = asStringArray(branch.required);
+      if (key === 'allOf') {
+        allOfRequired.push(...required);
+      } else if (required.length > 0) {
+        anyOfRequiredSets.push(required);
+      }
+    }
+  }
+
+  if (Object.keys(properties).length > 0) {
+    normalized.properties = properties;
+  }
+
+  const existingRequired = asStringArray(normalized.required);
+  const required = uniqueStrings([
+    ...existingRequired,
+    ...allOfRequired,
+    ...commonRequired(anyOfRequiredSets),
+  ]);
+  if (required.length > 0) {
+    normalized.required = required;
+  } else {
+    delete normalized.required;
+  }
+
+  if (!normalized.type) {
+    normalized.type = 'object';
+  }
+
+  return { schema: normalized, flattened: true };
+}
+
+function normalizeAnthropicToolInputSchema(
+  toolName: string,
+  inputSchema: Record<string, unknown>,
+  log?: ILogChannel,
+): Record<string, unknown> {
+  const { schema: flattenedSchema, flattened } = flattenTopLevelCombinators(inputSchema);
+  const schema = flattenedSchema.type
+    ? flattenedSchema
+    : { ...flattenedSchema, type: 'object' };
+
+  if (flattened) {
+    log?.info(
+      `Flattening top-level JSON Schema combinator for Anthropic tool "${toolName}"`,
+    );
+  }
+
+  if (!flattenedSchema.type) {
+    log?.info(
+      `Injecting type:"object" for tool "${toolName}" — inputSchema missing type field`,
+    );
+  }
+
+  return schema;
+}
+
 function formatSystemPrompt(
   systemPrompt: string | string[],
 ): string | AnthropicSystemSegment[] {
@@ -81,17 +236,11 @@ function formatTools(
   if (!toolDefinitions || toolDefinitions.length === 0) return undefined;
 
   return toolDefinitions.map((tool) => {
-    const schema = (tool.inputSchema as Record<string, unknown>) ?? {};
-    if (!schema.type) {
-      log?.info(
-        `Injecting type:"object" for tool "${tool.name}" — inputSchema missing type field`,
-      );
-      return {
-        name: tool.name,
-        description: tool.description ?? '',
-        input_schema: { ...schema, type: 'object' },
-      };
-    }
+    const schema = normalizeAnthropicToolInputSchema(
+      tool.name,
+      (tool.inputSchema as Record<string, unknown>) ?? {},
+      log,
+    );
     return {
       name: tool.name,
       description: tool.description ?? '',

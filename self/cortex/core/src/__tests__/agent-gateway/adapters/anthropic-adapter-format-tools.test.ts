@@ -117,4 +117,49 @@ describe('formatTools defensive injection (WR-148 phase 1.1)', () => {
     // The original schema should NOT have type added
     expect(originalRef.type).toBeUndefined();
   });
+
+  it('flattens top-level oneOf because Anthropic rejects top-level schema combinators', () => {
+    const log = createMockLog();
+    const schema: Record<string, unknown> = {
+      type: 'object',
+      oneOf: [
+        {
+          properties: {
+            mode: { const: 'read', description: 'Substring search mode' },
+            query: { type: 'string', minLength: 1 },
+            scope: { enum: ['global', 'project'] },
+          },
+          required: ['mode', 'query', 'scope'],
+          additionalProperties: false,
+        },
+        {
+          properties: {
+            mode: { const: 'retrieve', description: 'Situation-driven recall mode' },
+            situation: { type: 'string', minLength: 1 },
+            budget: { type: 'integer', minimum: 1 },
+          },
+          required: ['mode', 'situation', 'budget'],
+          additionalProperties: false,
+        },
+      ],
+    };
+
+    const tools = formatToolsViaAdapter([makeToolDefinition('memory_search', schema)], log);
+
+    expect(tools).toHaveLength(1);
+    expect(tools[0].input_schema.oneOf).toBeUndefined();
+    expect(tools[0].input_schema.type).toBe('object');
+    expect(tools[0].input_schema.required).toEqual(['mode']);
+    expect(tools[0].input_schema.properties).toMatchObject({
+      mode: { enum: ['read', 'retrieve'] },
+      query: { type: 'string', minLength: 1 },
+      scope: { enum: ['global', 'project'] },
+      situation: { type: 'string', minLength: 1 },
+      budget: { type: 'integer', minimum: 1 },
+    });
+    expect(schema.oneOf).toBeDefined();
+    expect(log.info).toHaveBeenCalledWith(
+      expect.stringContaining('Flattening top-level JSON Schema combinator for Anthropic tool "memory_search"'),
+    );
+  });
 });
