@@ -6,6 +6,7 @@
  */
 import type {
   IConfig,
+  ICredentialVaultService,
   IEventBus,
   IModelProvider,
   ModelProviderConfig,
@@ -26,16 +27,36 @@ import { LaneAwareProvider } from './lane-aware-provider.js';
 import { ObservableProvider } from './observable-provider.js';
 import { OllamaProvider } from './ollama-provider.js';
 import { ChatCompletionsProvider } from './chat-completions-provider.js';
+import {
+  PROVIDER_DEFINITIONS,
+  type ProviderDefinition,
+  type ProviderVendorKey,
+} from './definitions/index.js';
+
+export interface ProviderRegistryOptions {
+  laneRegistry?: InferenceLaneRegistry;
+  eventBus?: IEventBus;
+  credentialVaultService?: ICredentialVaultService;
+}
+
+type ProviderFactory = (config: ModelProviderConfig, apiKey?: string) => IModelProvider;
+
+const VENDOR_CLASS_MAP: Record<ProviderVendorKey, ProviderFactory> = {
+  anthropic: (config, apiKey) => new AnthropicProvider(config, { apiKey }),
+  openai: (config, apiKey) => new ChatCompletionsProvider(config, { apiKey }),
+  ollama: (config) => new OllamaProvider(config),
+};
 
 export class ProviderRegistry {
   private readonly providers = new Map<string, IModelProvider>();
   readonly laneRegistry: InferenceLaneRegistry;
   private readonly eventBus: IEventBus | undefined;
-  private static readonly ANTHROPIC_ENDPOINT = 'https://api.anthropic.com';
+  private readonly credentialVaultService: ICredentialVaultService | undefined;
 
-  constructor(config: IConfig, options?: { laneRegistry?: InferenceLaneRegistry; eventBus?: IEventBus }) {
+  constructor(config: IConfig, options?: ProviderRegistryOptions) {
     this.laneRegistry = options?.laneRegistry ?? new InferenceLaneRegistry();
     this.eventBus = options?.eventBus;
+    this.credentialVaultService = options?.credentialVaultService;
     const configObj = config.get() as { providers?: ProviderConfigEntry[] };
     const entries = Array.isArray(configObj.providers) ? configObj.providers : [];
 
@@ -146,29 +167,51 @@ export class ProviderRegistry {
   }
 
   private resolveRemoteApiKey(config: ModelProviderConfig): string | undefined {
-    if (this.isAnthropicProvider(config)) {
-      return process.env.ANTHROPIC_API_KEY;
+    const definition = this.findDefinitionByConfig(config);
+    if (!definition?.auth.required || !definition.auth.envVar) {
+      return undefined;
     }
 
-    return process.env.OPENAI_API_KEY;
+    return process.env[definition.auth.envVar];
   }
 
   private normalizeRemoteConfig(config: ModelProviderConfig): ModelProviderConfig {
-    if (this.isAnthropicProvider(config)) {
-      return {
-        ...config,
-        endpoint: ProviderRegistry.ANTHROPIC_ENDPOINT,
-      };
+    const definition = this.findDefinitionByConfig(config);
+    if (!definition || definition.isLocal) {
+      return config;
     }
 
-    return config;
+    return {
+      ...config,
+      endpoint: definition.defaultEndpoint,
+    };
   }
 
-  private isAnthropicProvider(config: ModelProviderConfig): boolean {
-    const endpoint = config.endpoint?.toLowerCase() ?? '';
-    const providerName = config.name.toLowerCase();
+  private findDefinitionByConfig(config: ModelProviderConfig): ProviderDefinition | undefined {
+    if (config.vendor) {
+      const byVendor = PROVIDER_DEFINITIONS.find(
+        (definition) => definition.vendorKey === config.vendor,
+      );
+      if (byVendor) return byVendor;
+    }
 
-    return endpoint.includes('anthropic') || providerName.includes('anthropic');
+    if (config.isLocal) {
+      return PROVIDER_DEFINITIONS.find((definition) => definition.vendorKey === 'ollama');
+    }
+
+    const byProviderId = PROVIDER_DEFINITIONS.find(
+      (definition) => definition.wellKnownProviderId === config.id,
+    );
+    if (byProviderId) return byProviderId;
+
+    const endpoint = config.endpoint?.replace(/\/+$/, '');
+    if (endpoint) {
+      return PROVIDER_DEFINITIONS.find(
+        (definition) => definition.defaultEndpoint.replace(/\/+$/, '') === endpoint,
+      );
+    }
+
+    return undefined;
   }
 
   /**
@@ -184,12 +227,15 @@ export class ProviderRegistry {
    * bypass the branches.
    */
   private resolveVendor(config: ModelProviderConfig): ProviderVendor {
-    if (config.isLocal) return 'ollama';
-    if (this.isAnthropicProvider(config)) return 'anthropic';
-    // Current default: any non-local, non-Anthropic config uses Chat Completions.
-    // Any future plugin subclass that needs disambiguation should extend this
-    // helper with a new branch rather than stamping `'openai'` by default.
-    return 'openai';
+    const definition = this.findDefinitionByConfig(config);
+    if (definition) return definition.vendorKey;
+
+    const fallback = config.vendor ?? 'openai';
+    console.info(
+      `[nous:providers] Provider ${config.id} could not be matched to a provider definition; ` +
+        `falling back to vendor '${fallback}'`,
+    );
+    return fallback;
   }
 
   private createProvider(config: ModelProviderConfig): IModelProvider {
@@ -204,22 +250,19 @@ export class ProviderRegistry {
       console.info(
         `[nous:providers] Provider ${baseConfig.id} stamped with unknown vendor ` +
           `'${resolvedVendor}' — adapter will fall back to text. Add a vendor ` +
-          `adapter in @nous/cortex-core if needed.`,
+          `adapter in @nous/subcortex-providers if needed.`,
       );
     }
     const normalizedConfig: ModelProviderConfig = {
       ...baseConfig,
       vendor: resolvedVendor,
     };
-    const provider = normalizedConfig.isLocal
-      ? new OllamaProvider(normalizedConfig)
-      : this.isAnthropicProvider(normalizedConfig)
-        ? new AnthropicProvider(normalizedConfig, {
-            apiKey: this.resolveRemoteApiKey(normalizedConfig),
-          })
-        : new ChatCompletionsProvider(normalizedConfig, {
-            apiKey: this.resolveRemoteApiKey(normalizedConfig),
-          });
+    const providerFactory = VENDOR_CLASS_MAP[resolvedVendor as ProviderVendorKey];
+    const provider = providerFactory
+      ? providerFactory(normalizedConfig, this.resolveRemoteApiKey(normalizedConfig))
+      : new ChatCompletionsProvider(normalizedConfig, {
+          apiKey: this.resolveRemoteApiKey(normalizedConfig),
+        });
     const lane = this.laneRegistry.getOrCreate(normalizedConfig);
     const laneAware = new LaneAwareProvider(provider, lane);
 

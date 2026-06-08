@@ -7,6 +7,7 @@ export * from './definitions/index.js';
 export { OllamaProvider } from './ollama-provider.js';
 export { ChatCompletionsProvider } from './chat-completions-provider.js';
 export { ProviderRegistry } from './provider-registry.js';
+export type { ProviderRegistryOptions } from './provider-registry.js';
 export { InferenceLane, LeaseHeldError } from './inference-lane.js';
 export { InferenceLaneRegistry } from './inference-lane-registry.js';
 export { LaneAwareProvider } from './lane-aware-provider.js';

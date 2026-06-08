@@ -32,3 +32,13 @@ export const PROVIDER_DEFINITIONS = [
 
 export type ProviderVendorKey = (typeof PROVIDER_DEFINITIONS)[number]['vendorKey'];
 export type BootstrapProviderKey = ProviderVendorKey;
+
+export function resolveProviderDefinition(vendorKey: ProviderVendorKey): ProviderDefinition {
+  const definition = PROVIDER_DEFINITIONS.find(
+    (candidate) => candidate.vendorKey === vendorKey,
+  );
+  if (!definition) {
+    throw new Error(`Provider definition is missing for vendor key '${vendorKey}'`);
+  }
+  return definition;
+}
