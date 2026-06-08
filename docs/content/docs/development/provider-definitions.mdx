@@ -60,7 +60,7 @@ Runtime behavior remains in the concrete provider classes and registry paths. Ad
 
 ## Adapter Modules
 
-Concrete provider adapter behavior lives in `self/subcortex/providers/src/adapters/`. Shared adapter contracts, parsed-output helpers, and protocol/fallback adapters live in `self/subcortex/providers/src/shared/`. Adapter modules use `defineProviderAdapter(...)` and expose `adapterKey`, `displayName`, `protocol`, `capabilities`, and `create(options?)`.
+Concrete provider adapter behavior lives in `self/subcortex/providers/src/adapters/`, which contains only concrete provider adapter modules. The package-level concrete adapter export surface is `self/subcortex/providers/src/provider-adapters.ts`, exposed as `@nous/subcortex-providers/adapters`. Shared adapter contracts, parsed-output helpers, and protocol/fallback adapters live in `self/subcortex/providers/src/shared/`. Adapter modules use `defineProviderAdapter(...)` and expose `adapterKey`, `displayName`, `protocol`, `capabilities`, and `create(options?)`.
 
 Current adapter keys are:
 
@@ -120,7 +120,7 @@ For a new provider, add the smallest complete leaf set:
 1. Add the provider metadata constant to the owning provider module with `as const satisfies ProviderDefinition`.
 2. Export it from `self/subcortex/providers/src/provider-definitions.ts` by including it in `PROVIDER_DEFINITIONS`.
 3. Add or reuse an adapter module in `src/adapters/` for concrete provider integrations, or `src/shared/` for shared protocol/fallback behavior.
-4. Export the adapter module from its owning index and include it in `ADAPTER_MODULES` in `adapter-registry.ts`.
+4. Export concrete provider adapter modules from `provider-adapters.ts` when they are part of the public package surface, and include them in `ADAPTER_MODULES` in `adapter-registry.ts`.
 5. Add tests proving definition aggregation, adapter resolution, response parsing, credential handling, and provider construction.
 
 If the provider uses an existing protocol, prefer reusing the existing adapter key. For example, an OpenAI-compatible service that accepts Chat Completions requests can use `adapterKey: 'chat-completions'` while still declaring its own `vendorKey`, endpoint, model, and credential namespace.
