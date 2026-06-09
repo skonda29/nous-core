@@ -211,9 +211,9 @@ export class OllamaProvider implements IModelProvider {
    * Wire-mode honoring (SP 1.15 RC-2 — restores the cycle-1 SP 1.9 RC-2
    * invariant after SP 1.13 inadvertently regressed it):
    * - `body.stream` is honored via `body.stream ?? true`. Explicit `false`
-   *   is preserved (the adapter sets `result.stream = false` when tools are
-   *   present — see ollama-adapter.ts:319-322 — to keep tool-call extraction
-   *   reliable). The cycle-1 SP 1.9 RC-2 invariant for non-tool-bearing
+   *   is preserved (the provider leaf adapter sets `result.stream = false`
+   *   when tools are present to keep tool-call extraction reliable). The
+   *   cycle-1 SP 1.9 RC-2 invariant for non-tool-bearing
    *   turns (progressive thinking) is preserved by defaulting to streaming.
    *
    * Per-branch SSE emission (SDS Invariants I-10 + I-11):
@@ -542,9 +542,9 @@ export class OllamaProvider implements IModelProvider {
     }
 
     // SP 1.15 RC-2 — propagate `stream` from the validated input so the
-    // dispatcher's `body.stream ?? true` honoring works. The Ollama adapter
-    // sets `result.stream = false` when tools are present (ollama-adapter.ts
-    // GOTCHA setter); preserving that wire-mode signal end-to-end is the
+    // dispatcher's `body.stream ?? true` honoring works. The Ollama provider
+    // leaf adapter sets `result.stream = false` when tools are present;
+    // preserving that wire-mode signal end-to-end is the
     // contract requirement.
     if (typeof input.stream === 'boolean') {
       body.stream = input.stream;

@@ -6,7 +6,7 @@
  * fields, logs when injection occurs, and does not mutate original schemas.
  */
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import { createAnthropicAdapter } from '../../adapters/anthropic-adapter.js';
+import { createAnthropicAdapter } from '../../providers/anthropic/adapter.js';
 import type { ToolDefinition, GatewayContextFrame, ILogChannel } from '@nous/shared';
 
 function createMockLog(): ILogChannel {

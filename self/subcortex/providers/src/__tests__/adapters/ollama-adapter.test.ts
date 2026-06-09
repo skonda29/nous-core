@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createOllamaAdapter,
   isToolCapableModel,
-} from '../../adapters/ollama-adapter.js';
+} from '../../providers/ollama/adapter.js';
 import type { TraceId, ToolDefinition, GatewayContextFrame } from '@nous/shared';
 
 const TRACE_ID = '550e8400-e29b-41d4-a716-446655440200' as TraceId;
@@ -404,8 +404,8 @@ describe('createOllamaAdapter', () => {
       // See ollama/ollama:main api/types.go lines 240-249 (ToolCallFunctionArguments
       // declaration) and 307-310 (UnmarshalJSON via json.Unmarshal into orderedmap).
       //
-      // Pre-fix, ollama-adapter.ts:269 wrapped tc.input in JSON.stringify, which
-      // produced a string-shaped value Ollama's parser rejected with HTTP 400
+      // Pre-fix, the provider leaf adapter wrapped tc.input in JSON.stringify,
+      // which produced a string-shaped value Ollama's parser rejected with HTTP 400
       // "Value looks like object, but can't find closing '}' symbol".
       // Regression evidence came from a real Ollama /api/chat 400 response.
       //

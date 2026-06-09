@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createAnthropicAdapter } from '../../adapters/anthropic-adapter.js';
+import { createAnthropicAdapter } from '../../providers/anthropic/adapter.js';
 import type { AdapterFormatInput } from '../../shared/adapter-types.js';
 
 describe('createAnthropicAdapter', () => {

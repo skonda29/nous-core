@@ -14,7 +14,7 @@ export type ProviderClass = z.infer<typeof ProviderClassSchema>;
 
 // --- Provider Vendor (WR-138) ---
 // The known baseline vendor keys feed provider-owned adapter resolution in
-// `@nous/subcortex-providers/src/adapters/registry.ts`; `openai` maps to the
+// `@nous/subcortex-providers/src/adapter-registry.ts`; `openai` maps to the
 // protocol-shaped `chat-completions` adapter key and `text` remains the
 // fall-through adapter. The schema is INTENTIONALLY an open string (`z.string().min(1)`,
 // NOT `z.enum([...])`) so new vendors can be added in provider definitions/adapters

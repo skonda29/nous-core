@@ -60,15 +60,15 @@ Runtime behavior remains in the concrete provider classes and registry paths. Ad
 
 ## Adapter Modules
 
-Concrete provider adapter behavior lives in `self/subcortex/providers/src/adapters/`, which contains only concrete provider adapter modules. The package-level concrete adapter export surface is `self/subcortex/providers/src/provider-adapters.ts`, exposed as `@nous/subcortex-providers/adapters`. Shared adapter contracts, parsed-output helpers, and protocol/fallback adapters live in `self/subcortex/providers/src/shared/`. Adapter modules use `defineProviderAdapter(...)` and expose `adapterKey`, `displayName`, `protocol`, `capabilities`, and `create(options?)`.
+Concrete provider adapter behavior lives in each provider leaf at `self/subcortex/providers/src/providers/<vendor>/adapter.ts`. The package-level certified adapter export surface is generated through `self/subcortex/providers/src/generated/provider-adapters.generated.ts` and re-exported by `self/subcortex/providers/src/provider-adapters.ts`, exposed as `@nous/subcortex-providers/adapters`. Shared adapter contracts, parsed-output helpers, and protocol/fallback adapters live in `self/subcortex/providers/src/shared/`. Adapter modules use `defineProviderAdapter(...)` and expose `adapterKey`, `displayName`, `protocol`, `capabilities`, and `create(options?)`.
 
 Current adapter keys are:
 
 | Adapter module | Adapter key | Protocol |
 |----------------|-------------|----------|
-| `anthropic-adapter.ts` | `anthropic` | `anthropic-messages` |
+| `providers/anthropic/adapter.ts` | `anthropic` | `anthropic-messages` |
 | `shared/chat-completions-adapter.ts` | `chat-completions` | `chat-completions` |
-| `adapters/ollama-adapter.ts` | `ollama` | `ollama` |
+| `providers/ollama/adapter.ts` | `ollama` | `ollama` |
 | `shared/text-adapter.ts` | `text` | `text-fallback` |
 
 `openai` remains a provider vendor key for the current Chat Completions-backed definition, but it resolves to the canonical `chat-completions` adapter key.
@@ -119,8 +119,8 @@ For a new provider, add the smallest complete leaf set:
 
 1. Add the provider metadata constant to the owning provider module with `as const satisfies ProviderDefinition`.
 2. Export it from `self/subcortex/providers/src/provider-definitions.ts` by including it in `PROVIDER_DEFINITIONS`.
-3. Add or reuse an adapter module in `src/adapters/` for concrete provider integrations, or `src/shared/` for shared protocol/fallback behavior.
-4. Export concrete provider adapter modules from `provider-adapters.ts` when they are part of the public package surface, and include them in `ADAPTER_MODULES` in `adapter-registry.ts`.
+3. Add or reuse an adapter module in `src/providers/<vendor>/adapter.ts` for concrete provider integrations, or `src/shared/` for shared protocol/fallback behavior.
+4. Run `pnpm --filter @nous/subcortex-providers run generate:providers` so generated aggregates expose certified provider leaf adapters through `provider-adapters.ts` and `adapter-registry.ts`.
 5. Add tests proving definition aggregation, adapter resolution, response parsing, credential handling, and provider construction.
 
 If the provider uses an existing protocol, prefer reusing the existing adapter key. For example, an OpenAI-compatible service that accepts Chat Completions requests can use `adapterKey: 'chat-completions'` while still declaring its own `vendorKey`, endpoint, model, and credential namespace.
