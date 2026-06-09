@@ -1,11 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import { createChatCompletionsAdapter } from '../../shared/chat-completions-adapter.js';
+import {
+  chatCompletionsAdapter,
+  createChatCompletionsAdapter,
+} from '../../protocols/openai-api/adapter.js';
+import {
+  chatCompletionsAdapter as shimChatCompletionsAdapter,
+  createChatCompletionsAdapter as shimCreateChatCompletionsAdapter,
+} from '../../shared/chat-completions-adapter.js';
 import type { TraceId, ToolDefinition } from '@nous/shared';
 
 const TRACE_ID = '550e8400-e29b-41d4-a716-446655440103' as TraceId;
 
 describe('createChatCompletionsAdapter', () => {
   const adapter = createChatCompletionsAdapter();
+
+  it('keeps the shared chat-completions adapter path as a compatibility shim', () => {
+    expect(shimChatCompletionsAdapter).toBe(chatCompletionsAdapter);
+    expect(shimCreateChatCompletionsAdapter).toBe(createChatCompletionsAdapter);
+  });
 
   describe('capabilities', () => {
     it('has nativeToolUse true, others false', () => {

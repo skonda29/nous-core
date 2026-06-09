@@ -46,6 +46,12 @@
       "import": "./dist/provider-factories.js",
       "require": "./dist/provider-factories.js",
       "default": "./dist/provider-factories.js"
+    },
+    "./protocols/openai-api": {
+      "types": "./dist/protocols/openai-api/index.d.ts",
+      "import": "./dist/protocols/openai-api/index.js",
+      "require": "./dist/protocols/openai-api/index.js",
+      "default": "./dist/protocols/openai-api/index.js"
     }
   },
   "scripts": {

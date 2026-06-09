@@ -1,4 +1,4 @@
 export {
   chatCompletionsAdapter as providerAdapter,
   createChatCompletionsAdapter,
-} from '../../shared/chat-completions-adapter.js';
+} from '../../protocols/openai-api/adapter.js';

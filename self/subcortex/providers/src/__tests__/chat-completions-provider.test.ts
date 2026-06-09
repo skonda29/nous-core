@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { ProviderId } from '@nous/shared';
 import { NousError, ValidationError } from '@nous/shared';
-import { ChatCompletionsProvider } from '../chat-completions-provider.js';
+import { ChatCompletionsProvider } from '../protocols/openai-api/provider.js';
+import { ChatCompletionsProvider as ShimChatCompletionsProvider } from '../chat-completions-provider.js';
 
 const MOCK_CONFIG = {
   id: '00000000-0000-0000-0000-000000000001' as ProviderId,
@@ -26,6 +27,10 @@ describe('ChatCompletionsProvider', () => {
       apiKey: 'test-key',
     });
     expect(provider.getConfig()).toEqual(MOCK_CONFIG);
+  });
+
+  it('keeps the root chat-completions provider path as a compatibility shim', () => {
+    expect(ShimChatCompletionsProvider).toBe(ChatCompletionsProvider);
   });
 
   it('constructor throws when no API key', () => {

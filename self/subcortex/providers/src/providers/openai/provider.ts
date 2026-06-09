@@ -1,4 +1,4 @@
-import { ChatCompletionsProvider } from '../../chat-completions-provider.js';
+import { ChatCompletionsProvider } from '../../protocols/openai-api/provider.js';
 import type { ProviderFactoryModule } from '../../provider-factories.js';
 
 export const providerFactory = {

@@ -26,7 +26,7 @@ import {
   LaneAwareProvider,
   ObservableProvider,
 } from '@nous/subcortex-inference-runtime';
-import { ChatCompletionsProvider } from './chat-completions-provider.js';
+import { ChatCompletionsProvider } from './protocols/openai-api/provider.js';
 import {
   PROVIDER_DEFINITIONS,
   type ProviderDefinition,

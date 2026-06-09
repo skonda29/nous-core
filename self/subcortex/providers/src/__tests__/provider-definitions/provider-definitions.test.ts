@@ -64,9 +64,9 @@ describe('provider definitions catalog', () => {
     const providersSrcDir = dirname(fileURLToPath(import.meta.url))
       .replace(`${join('src', '__tests__', 'provider-definitions')}`, 'src');
     const providerFiles = [
-      'anthropic-provider.ts',
-      'chat-completions-provider.ts',
-      'ollama-provider.ts',
+      join('anthropic-provider.ts'),
+      join('protocols', 'openai-api', 'provider.ts'),
+      join('ollama-provider.ts'),
     ];
     const forbidden = [
       /fetch/,
