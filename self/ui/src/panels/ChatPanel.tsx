@@ -97,6 +97,26 @@ function AmbientBadge({ icon, label, color }: {
     )
 }
 
+function insertOverlayAfterKey(
+    entries: readonly LocalOverlayEntry[],
+    targetKey: string | null,
+    entry: LocalOverlayEntry,
+): readonly LocalOverlayEntry[] {
+    if (targetKey == null) return [...entries, entry]
+    const idx = entries.findIndex((o) => o.kind === 'optimistic-send' && o.key === targetKey)
+    if (idx < 0) return [...entries, entry]
+    return [
+        ...entries.slice(0, idx + 1),
+        entry,
+        ...entries.slice(idx + 1),
+    ]
+}
+
+function withoutQueuedFlag(message: ChatMessage): ChatMessage {
+    const { queued: _queued, ...unqueued } = message
+    return unqueued
+}
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -307,37 +327,58 @@ export function ChatPanel(props: ChatPanelProps) {
     //   - immediate-send path (called from send() when no turn is in flight)
     //   - drain path (called from the queue-drain effect after a turn ends)
     // The skipUserAppend flag suppresses the user-message overlay push in
-    // the drain path because the enqueue path already pushed it.
+    // the drain path because the enqueue path already pushed it. When a
+    // queued entry drains, answeredOverlayKey identifies the visible user
+    // entry so the direct assistant fallback lands directly after it.
     //
-    // SP 1.9 Item 1 — assistant-side reconciliation no longer needs an
-    // explicit setMessages(prev => [...prev, assistant]) call: the
-    // `useChatApi.send` invalidate at transport/src/hooks/useChatApi.ts:60-64
-    // fires `utils.chat.getHistory.invalidate(...)` after the server-side
-    // STM append, which drives the useQuery refetch above (staleTime: 0).
-    // The optimistic-send overlay entry is pruned by the prune effect when
-    // the matching server entry appears.
-    const invoke = async (userMsg: string, skipUserAppend = false) => {
+    // The authoritative history refetch remains the long-lived source of
+    // truth, but the successful send payload also renders through the local
+    // overlay. That closes the successful-response/no-visible-assistant gap
+    // when STM append, session filtering, or React Query refetch lags behind
+    // the backend response. The overlay entry is pruned when the matching
+    // server entry appears.
+    const invoke = async (userMsg: string, skipUserAppend = false, answeredOverlayKey: string | null = null) => {
         setSending(true)
         onSendStart?.()
 
+        let userOverlayKey = answeredOverlayKey
         if (!skipUserAppend) {
             const userEntry: ChatMessage = { role: 'user', content: userMsg, timestamp: new Date().toISOString() }
+            userOverlayKey = overlayKeyForOptimisticSend(userEntry)
             setLocalOverlay((prev) => [
                 ...prev,
                 {
                     kind: 'optimistic-send',
                     message: userEntry,
-                    key: overlayKeyForOptimisticSend(userEntry),
+                    key: userOverlayKey!,
                     issuedAt: Date.now(),
                 },
             ])
         }
 
         try {
-            await chatApi!.send(userMsg)
+            const result = await chatApi!.send(userMsg)
+            const assistantEntry: ChatMessage = {
+                role: 'assistant',
+                content: result.response,
+                timestamp: new Date().toISOString(),
+                ...(result.traceId ? { traceId: result.traceId } : {}),
+                ...(result.contentType ? { contentType: result.contentType } : {}),
+                ...(result.thinkingContent ? { thinkingContent: result.thinkingContent } : {}),
+                ...(result.cards ? { cards: result.cards } : {}),
+                ...(result.empty_response_kind ? { empty_response_kind: result.empty_response_kind } : {}),
+                ...(result.thinking_unavailable ? { thinking_unavailable: result.thinking_unavailable } : {}),
+            }
+            const assistantOverlay: LocalOverlayEntry = {
+                kind: 'optimistic-send',
+                message: assistantEntry,
+                key: overlayKeyForOptimisticSend(assistantEntry),
+                issuedAt: Date.now(),
+            }
+            setLocalOverlay((prev) => insertOverlayAfterKey(prev, userOverlayKey, assistantOverlay))
             // Reconcile: authoritative response replaces streaming buffer.
-            // The assistant entry arrives via the useQuery refetch driven by
-            // the useChatApi.send invalidate (Invariant E preserved).
+            // The assistant entry is also reconciled via the useQuery refetch
+            // driven by the useChatApi.send invalidate (Invariant E preserved).
             setStreamingContent('')
             setStreamingThinking('')
         } catch {
@@ -403,6 +444,12 @@ export function ChatPanel(props: ChatPanelProps) {
         if (sending || queuedMessages.length === 0) return
         const [next, ...rest] = queuedMessages
         setQueuedMessages(rest)
+        const queuedOverlay = localOverlay.find(
+            (o) => o.kind === 'optimistic-send' && o.message.role === 'user' && o.message.queued,
+        )
+        const answeredOverlayKey = queuedOverlay?.kind === 'optimistic-send'
+            ? overlayKeyForOptimisticSend(withoutQueuedFlag(queuedOverlay.message))
+            : null
         // Clear the queued flag on the oldest queued user-message overlay
         // entry (FIFO). Re-keys the overlay entry with the un-queued shape
         // so the dedup helper can match it against the eventual server entry.
@@ -413,19 +460,19 @@ export function ChatPanel(props: ChatPanelProps) {
             if (idx < 0) return prev
             const target = prev[idx]
             if (target.kind !== 'optimistic-send') return prev
-            const { queued: _queued, ...unqueued } = target.message
+            const unqueued = withoutQueuedFlag(target.message)
             const updated: LocalOverlayEntry = {
                 kind: 'optimistic-send',
-                message: unqueued as ChatMessage,
-                key: overlayKeyForOptimisticSend(unqueued as ChatMessage),
+                message: unqueued,
+                key: overlayKeyForOptimisticSend(unqueued),
                 issuedAt: target.issuedAt,
             }
             const copy = prev.slice()
             copy[idx] = updated
             return copy
         })
-        invoke(next, true)
-    }, [sending, queuedMessages])
+        invoke(next, true, answeredOverlayKey)
+    }, [sending, queuedMessages, localOverlay])
 
     // --- Input focus/blur forwarding ---
     const handleFocus = useCallback(() => {

@@ -46,6 +46,29 @@ function getSendButton(): HTMLButtonElement {
 }
 
 describe('SP 1.9 — ChatPanel optimistic-send overlay (Axis C case 2)', () => {
+  it('renders the successful send response from the direct payload before history refetch', async () => {
+    const send = vi.fn().mockResolvedValue({
+      response: 'direct assistant reply',
+      traceId: 'tr-direct',
+      thinking_unavailable: {
+        reason: 'provider/model template does not surface thinking',
+        ref: 'WR-172',
+      },
+    })
+    const api = makeApi(send)
+
+    render(<ChatPanel chatApi={api} projectId="p1" />)
+
+    fireEvent.change(getTextarea(), { target: { value: 'hello' } })
+    fireEvent.click(getSendButton())
+
+    await waitFor(() => {
+      expect(screen.getByText('direct assistant reply')).toBeTruthy()
+    })
+    expect(screen.getByText(/Thinking unavailable on this turn/)).toBeTruthy()
+    expect(screen.getByText(/WR-172/)).toBeTruthy()
+  })
+
   it('case 2: optimistic user-entry renders immediately on send; dedup against server echo', async () => {
     const send = vi.fn().mockResolvedValue({ response: 'reply', traceId: 'tr-1' })
     const api = makeApi(send)
