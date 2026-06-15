@@ -326,14 +326,41 @@ export class AgentGateway implements IAgentGateway {
         // stream-capable provider, eventBus): use invokeWithStreaming. That path
         // already emits BOTH content and thinking chunks (agent-gateway.ts:543-556),
         // so it dominates — no double-stream.
-        const canStreamContent = !!this.config.eventBus
+        const hasEventBus = !!this.config.eventBus;
+        const providerStreamAvailable = typeof provider.stream === 'function';
+        const providerThinkingStreamAvailable = typeof provider.invokeWithThinkingStream === 'function';
+        const toolCount = tools?.length ?? 0;
+        const canStreamContent = hasEventBus
           && adapter.capabilities.streaming
-          && typeof provider.stream === 'function'
+          && providerStreamAvailable
           && (!tools || tools.length === 0);
 
-        const canStreamThinking = !!this.config.eventBus
+        const canStreamThinking = hasEventBus
           && adapter.capabilities.extendedThinking
-          && typeof provider.invokeWithThinkingStream === 'function';
+          && providerThinkingStreamAvailable;
+
+        this.log.debug('streaming gate diagnostics', {
+          agentClass: this.agentClass,
+          providerType: this.cachedAdapterProviderSignature,
+          eventBusAvailable: hasEventBus,
+          toolCount,
+          content: {
+            adapterStreaming: adapter.capabilities.streaming,
+            providerStreamAvailable,
+            blockedByTools: toolCount > 0,
+            selected: canStreamContent,
+          },
+          thinking: {
+            adapterExtendedThinking: adapter.capabilities.extendedThinking,
+            providerThinkingStreamAvailable,
+            selected: canStreamThinking,
+          },
+          selectedPath: canStreamContent
+            ? 'content_stream'
+            : canStreamThinking
+              ? 'thinking_stream'
+              : 'invoke',
+        });
 
         const modelResponse = canStreamContent
           ? await this.invokeWithStreaming(provider, adapter, formatted, traceId, projectId, correlation)
@@ -404,7 +431,7 @@ export class AgentGateway implements IAgentGateway {
           const metadata: Record<string, unknown> | undefined =
             parsedOutput.toolCalls.length > 0
               ? {
-                  tool_calls: parsedOutput.toolCalls.map((tc) => ({
+                  tool_calls: parsedOutput.toolCalls.map((tc: { id?: string; name: string; params: unknown }) => ({
                     id: tc.id,
                     name: tc.name,
                     input: tc.params,
@@ -655,6 +682,7 @@ export class AgentGateway implements IAgentGateway {
     correlation: { runId: string; parentId?: string; sequence: number },
   ): Promise<import('@nous/shared').ModelResponse> {
     const eventBus = this.config.eventBus!;
+    const providerConfig = provider.getConfig();
     const request = {
       role: this.config.modelRole ?? deriveDefaultModelRole(this.config.agentClass),
       input: formatted.input,
@@ -666,13 +694,27 @@ export class AgentGateway implements IAgentGateway {
     };
 
     try {
+      const streamStartedAt = Date.now();
       let accumulatedContent = '';
       let accumulatedThinking = '';
+      let contentChunkCount = 0;
+      let thinkingChunkCount = 0;
       let lastUsage: ModelStreamChunk['usage'];
+
+      this.log.debug('content streaming invocation started', {
+        agentClass: this.agentClass,
+        providerId: providerConfig.id,
+        modelId: providerConfig.modelId,
+        traceId,
+        projectId,
+        correlationRunId: correlation.runId,
+        correlationParentId: correlation.parentId,
+      });
 
       for await (const chunk of provider.stream!(request)) {
         if (chunk.thinking) {
           accumulatedThinking += chunk.thinking;
+          thinkingChunkCount += 1;
           eventBus.publish('chat:thinking-chunk', {
             content: chunk.thinking,
             traceId,
@@ -680,6 +722,7 @@ export class AgentGateway implements IAgentGateway {
         }
         if (chunk.content) {
           accumulatedContent += chunk.content;
+          contentChunkCount += 1;
           eventBus.publish('chat:content-chunk', {
             content: chunk.content,
             traceId,
@@ -689,6 +732,22 @@ export class AgentGateway implements IAgentGateway {
           lastUsage = chunk.usage;
         }
       }
+
+      this.log.debug('content streaming invocation completed', {
+        agentClass: this.agentClass,
+        providerId: providerConfig.id,
+        modelId: providerConfig.modelId,
+        traceId,
+        projectId,
+        correlationRunId: correlation.runId,
+        correlationParentId: correlation.parentId,
+        contentChunkCount,
+        thinkingChunkCount,
+        contentLength: accumulatedContent.length,
+        thinkingLength: accumulatedThinking.length,
+        latencyMs: Date.now() - streamStartedAt,
+        usage: lastUsage,
+      });
 
       // Build a ModelResponse-compatible result from accumulated chunks
       const output = accumulatedThinking
@@ -702,10 +761,19 @@ export class AgentGateway implements IAgentGateway {
           outputTokens: lastUsage?.outputTokens ?? 0,
         },
         traceId: traceId as TraceId,
-        providerId: provider.getConfig().id,
+        providerId: providerConfig.id,
       };
     } catch (err) {
-      this.log.warn('streaming failed, falling back to invoke()', { error: String(err) });
+      this.log.warn('streaming failed, falling back to invoke()', {
+        agentClass: this.agentClass,
+        providerId: providerConfig.id,
+        modelId: providerConfig.modelId,
+        traceId,
+        projectId,
+        correlationRunId: correlation.runId,
+        correlationParentId: correlation.parentId,
+        error: String(err),
+      });
       return provider.invoke(request);
     }
   }

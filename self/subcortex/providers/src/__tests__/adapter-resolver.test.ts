@@ -61,7 +61,7 @@ describe('adapter resolver', () => {
   it('resolves canonical adapter keys', () => {
     expect(resolveAdapter('anthropic').capabilities.cacheControl).toBe(true);
     expect(resolveAdapter('chat-completions').capabilities.nativeToolUse).toBe(true);
-    expect(resolveAdapter('codex-cli').capabilities.streaming).toBe(false);
+    expect(resolveAdapter('codex-cli').capabilities.streaming).toBe(true);
     expect(resolveAdapter('ollama').capabilities.extendedThinking).toBe(true);
     expect(resolveAdapter('text').capabilities.nativeToolUse).toBe(false);
   });

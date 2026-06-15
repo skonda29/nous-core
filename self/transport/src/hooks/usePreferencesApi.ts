@@ -1,6 +1,19 @@
 import { useMemo, useRef } from 'react'
 import { trpc } from '../client'
 
+type ApiKeyProvider = 'anthropic' | 'openai'
+
+type ApiKeyEntry = {
+  provider: ApiKeyProvider
+  configured: boolean
+  maskedKey: string | null
+  createdAt: string | null
+}
+
+function isApiKeyProvider(value: string): value is ApiKeyProvider {
+  return value === 'anthropic' || value === 'openai'
+}
+
 /**
  * tRPC-backed preferences API hook.
  *
@@ -44,7 +57,9 @@ export function usePreferencesApi() {
     () => ({
       // Required methods
       getApiKeys: async () => {
-        return utilsRef.current.preferences.getApiKeys.fetch()
+        const entries = await utilsRef.current.preferences.getApiKeys.fetch()
+        return entries
+          .filter((entry): entry is ApiKeyEntry => isApiKeyProvider(entry.provider))
       },
       setApiKey: async (input: { provider: string; key: string }) => {
         return setApiKeyRef.current(input as any)
