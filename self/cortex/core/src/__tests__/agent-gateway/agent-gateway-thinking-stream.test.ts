@@ -149,6 +149,7 @@ function createGateway(args: {
   eventBus?: IEventBus;
   toolSurface?: IScopedMcpToolSurface;
   log?: ILogChannel;
+  harness?: AgentGatewayConfig['harness'];
 }): { gateway: AgentGateway; outbox: InMemoryGatewayOutboxSink } {
   const outbox = new InMemoryGatewayOutboxSink();
   const toolSurface = args.toolSurface ?? {
@@ -162,6 +163,7 @@ function createGateway(args: {
     modelProvider: args.provider,
     eventBus: args.eventBus,
     log: args.log,
+    harness: args.harness,
     outbox,
     now: () => NOW,
     nowMs: () => Date.parse(NOW),
@@ -277,6 +279,58 @@ describe('AgentGateway SP 1.13 RC-2 thinking-stream dispatch', () => {
       .toEqual([
         { channel: 'chat:content-chunk', payload: { content: 'visible reply', traceId: TRACE_ID }, ts: expect.any(Number) },
       ]);
+    expect(log.records).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        message: 'streaming gate diagnostics',
+        data: expect.objectContaining({
+          providerType: 'codex-cli',
+          toolCount: 1,
+          modelVisibleToolCount: 0,
+          selectedPath: 'content_stream',
+          content: expect.objectContaining({
+            blockedByTools: false,
+            selected: true,
+          }),
+        }),
+      }),
+    ]));
+  });
+
+  it('WR-177 — suppresses harness toolDefinitions for non-native-tool providers before streaming gate', async () => {
+    let capturedPrompt = '';
+    const streamSpy = vi.fn().mockImplementation(async function* (request: ModelRequest) {
+      capturedPrompt = String((request.input as { prompt?: string }).prompt ?? '');
+      yield { content: 'harness reply', done: false };
+      yield { content: '', done: true };
+    });
+    const invokeSpy = vi.fn();
+    const provider: IModelProvider = {
+      getConfig: () => makeCodexCliConfig(),
+      invoke: invokeSpy,
+      stream: streamSpy,
+    };
+    const eventBus = recordingEventBus();
+    const log = recordingLog();
+
+    const { gateway } = createGateway({
+      provider,
+      eventBus,
+      log,
+      harness: {
+        promptFormatter: vi.fn().mockReturnValue({
+          systemPrompt: 'Custom Codex prompt.',
+          toolDefinitions: TOOL_DEFS,
+        }),
+      },
+    });
+    const result = await gateway.run(createBaseInput());
+
+    expect(result.status).toBe('completed');
+    expect(streamSpy).toHaveBeenCalled();
+    expect(invokeSpy).not.toHaveBeenCalled();
+    expect(capturedPrompt).toContain('Custom Codex prompt.');
+    expect(capturedPrompt).not.toContain('Available tools');
+    expect(capturedPrompt).not.toContain('workflow_list');
     expect(log.records).toEqual(expect.arrayContaining([
       expect.objectContaining({
         message: 'streaming gate diagnostics',

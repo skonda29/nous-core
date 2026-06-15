@@ -300,7 +300,9 @@ export class AgentGateway implements IAgentGateway {
             );
 
         const systemPrompt = promptOutput.systemPrompt;
-        const formattedToolDefinitions = promptOutput.toolDefinitions;
+        const formattedToolDefinitions = adapter.capabilities.nativeToolUse
+          ? promptOutput.toolDefinitions
+          : undefined;
         const systemPromptText = Array.isArray(systemPrompt)
           ? systemPrompt.join('\n\n')
           : systemPrompt;
