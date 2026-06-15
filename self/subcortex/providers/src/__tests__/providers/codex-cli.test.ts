@@ -210,10 +210,11 @@ describe('Codex CLI provider leaf', () => {
   });
 
   it('maps Agent CLI runner failures to provider errors', async () => {
+    const runner = createFakeAgentCliRunner([
+      { exitCode: 2, stderr: 'bad args' },
+    ]);
     const provider = new CodexCliProvider(createConfig(), {
-      runner: createFakeAgentCliRunner([
-        { exitCode: 2, stderr: 'bad args' },
-      ]),
+      runner,
     });
 
     await expect(provider.invoke({
@@ -228,9 +229,10 @@ describe('Codex CLI provider leaf', () => {
         exitCode: 2,
       },
     });
+    expect(runner.invocations).toHaveLength(1);
   });
 
-  it('retries without --ignore-user-config when the selected Codex CLI rejects the flag', async () => {
+  it('retries without --ignore-user-config and with service_tier=fast when the selected Codex CLI rejects the flag', async () => {
     const runner = createFakeAgentCliRunner([
       {
         exitCode: 2,
@@ -258,6 +260,54 @@ describe('Codex CLI provider leaf', () => {
       '--ask-for-approval',
       'never',
       'exec',
+      '-c',
+      'service_tier=fast',
+      '--sandbox',
+      'read-only',
+      '--color',
+      'never',
+      '--model',
+      'gpt-5.5',
+      '--output-last-message',
+      expect.any(String),
+      '-',
+    ]);
+  });
+
+  it('surfaces an actionable service_tier config error when compatibility retry cannot override it', async () => {
+    const runner = createFakeAgentCliRunner([
+      {
+        exitCode: 2,
+        stderr: "error: unexpected argument '--ignore-user-config' found",
+      },
+      {
+        exitCode: 2,
+        stderr: 'Error loading config.toml: unknown variant default, expected fast or flex in service_tier',
+      },
+    ]);
+    const provider = new CodexCliProvider(createConfig('gpt-5.5'), { runner });
+
+    await expect(provider.invoke({
+      role: 'workers',
+      input: { prompt: 'hello' },
+      traceId: TRACE_ID,
+    })).rejects.toMatchObject({
+      code: 'PROVIDER_UNAVAILABLE',
+      message: expect.stringContaining('service_tier = "default"'),
+      context: {
+        provider: 'codex-cli',
+        failureKind: 'non_zero_exit',
+        exitCode: 2,
+      },
+    });
+
+    expect(runner.invocations).toHaveLength(2);
+    expect(runner.invocations[1]?.command.args).toEqual([
+      '--ask-for-approval',
+      'never',
+      'exec',
+      '-c',
+      'service_tier=fast',
       '--sandbox',
       'read-only',
       '--color',

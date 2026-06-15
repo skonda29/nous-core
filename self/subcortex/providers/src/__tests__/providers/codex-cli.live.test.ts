@@ -64,7 +64,7 @@ describe('Codex CLI provider live BT', () => {
         traceId: TRACE_ID,
       });
     } catch (error) {
-      console.error('Codex live BT invocation args:', calls[0]?.invocation.command.args);
+      console.error('Codex live BT invocation args:', calls.map((call) => call.invocation.command.args));
       throw error;
     }
 

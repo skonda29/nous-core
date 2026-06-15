@@ -41,6 +41,7 @@ export interface CodexCliProcessRunnerOptions {
 }
 
 const CODEX_CLI_IGNORE_USER_CONFIG_ARG = '--ignore-user-config';
+const CODEX_CLI_SERVICE_TIER_OVERRIDE_ARGS = ['-c', 'service_tier=fast'] as const;
 
 export const CODEX_CLI_INVOCATION_DEFAULTS: AgentCliInvocationDefaults = {
   command: {
@@ -64,20 +65,26 @@ export const CODEX_CLI_AGENT_ADAPTER = createAgentCliProviderAdapter({
 
 export function createCodexCliInvocationDefaults(
   executable: string = CODEX_CLI_PROVIDER_DEFINITION.agentCli.command.executable,
-  options: { readonly ignoreUserConfig?: boolean } = {},
+  options: {
+    readonly ignoreUserConfig?: boolean;
+    readonly serviceTierOverride?: boolean;
+  } = {},
 ): AgentCliInvocationDefaults {
   const defaultArgs = options.ignoreUserConfig === false
     ? CODEX_CLI_INVOCATION_DEFAULTS.command.defaultArgs?.filter(
       (arg) => arg !== CODEX_CLI_IGNORE_USER_CONFIG_ARG,
     )
     : CODEX_CLI_INVOCATION_DEFAULTS.command.defaultArgs;
+  const compatibilityArgs = options.serviceTierOverride === true
+    ? addArgsAfterExec(defaultArgs, CODEX_CLI_SERVICE_TIER_OVERRIDE_ARGS)
+    : defaultArgs;
 
   return {
     ...CODEX_CLI_INVOCATION_DEFAULTS,
     command: {
       ...CODEX_CLI_INVOCATION_DEFAULTS.command,
       executable,
-      defaultArgs,
+      defaultArgs: compatibilityArgs,
     },
   };
 }
@@ -98,7 +105,10 @@ export class CodexCliProvider implements IModelProvider {
       defaults: createCodexCliInvocationDefaults(executable),
     });
     this.fallbackAgentAdapter = createAgentCliProviderAdapter({
-      defaults: createCodexCliInvocationDefaults(executable, { ignoreUserConfig: false }),
+      defaults: createCodexCliInvocationDefaults(executable, {
+        ignoreUserConfig: false,
+        serviceTierOverride: true,
+      }),
     });
   }
 
@@ -127,6 +137,9 @@ export class CodexCliProvider implements IModelProvider {
 
       if (!result.ok && isIgnoreUserConfigUnsupported(result.failure, result.stderr, result.stdout)) {
         result = await this.fallbackAgentAdapter.invoke(invocationInput, runner);
+        if (!result.ok && isServiceTierDefaultUnsupported(result.failure, result.stderr, result.stdout)) {
+          throw createServiceTierDefaultError(result.failure, result.stderr, result.stdout);
+        }
       }
 
       if (!result.ok) {
@@ -196,6 +209,21 @@ export class CodexCliProvider implements IModelProvider {
       ...(signal ? { signal } : {}),
     };
   }
+}
+
+function addArgsAfterExec(
+  args: readonly string[] | undefined,
+  argsToAdd: readonly string[],
+): readonly string[] | undefined {
+  if (args === undefined) return undefined;
+  const execIndex = args.indexOf('exec');
+  if (execIndex === -1) return [...args, ...argsToAdd];
+
+  return [
+    ...args.slice(0, execIndex + 1),
+    ...argsToAdd,
+    ...args.slice(execIndex + 1),
+  ];
 }
 
 
@@ -408,6 +436,41 @@ function isIgnoreUserConfigUnsupported(
     'unsupported option',
     'unsupported argument',
   ].some((marker) => text.includes(marker));
+}
+
+function isServiceTierDefaultUnsupported(
+  failure: AgentCliFailure | undefined,
+  stderr?: string,
+  stdout?: string,
+): boolean {
+  const text = [failure?.message, stderr, stdout]
+    .filter((value): value is string => typeof value === 'string')
+    .join('\n')
+    .toLowerCase();
+
+  return text.includes('service_tier') &&
+    text.includes('unknown variant default') &&
+    text.includes('expected fast or flex');
+}
+
+function createServiceTierDefaultError(
+  failure: AgentCliFailure | undefined,
+  stderr?: string,
+  stdout?: string,
+): NousError {
+  return new NousError(
+    'Codex CLI loaded config.toml but rejected service_tier = "default"; this Codex CLI expects fast or flex. Update Codex CLI or change service_tier to fast/flex in Codex config.',
+    failure?.kind === 'auth' ? 'PROVIDER_ERROR' : 'PROVIDER_UNAVAILABLE',
+    {
+      provider: 'codex-cli',
+      failureKind: failure?.kind,
+      exitCode: failure?.exitCode,
+      signal: failure?.signal,
+      timedOut: failure?.timedOut,
+      stderr,
+      stdout,
+    },
+  );
 }
 
 function toProviderError(
