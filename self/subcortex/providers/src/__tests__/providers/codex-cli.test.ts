@@ -9,10 +9,12 @@ import {
 import {
   CODEX_CLI_AGENT_ADAPTER,
   CODEX_CLI_DEFAULT_MODEL_ID,
+  CODEX_CLI_EXECUTION_CAPABILITY_PROFILE,
   CODEX_CLI_PROVIDER_DEFINITION,
   CodexCliProvider,
   type CodexCliCommandResolver,
   createCodexCliAdapter,
+  providerAdapter,
   providerDefinition,
   providerFactory,
   renderCodexCliPrompt,
@@ -108,6 +110,8 @@ describe('Codex CLI provider leaf', () => {
   it('exposes a ProviderAdapter module for codex-cli with text-safe parsing', () => {
     const adapter = createCodexCliAdapter();
 
+    expect(providerAdapter.executionCapabilityProfile).toBe(CODEX_CLI_EXECUTION_CAPABILITY_PROFILE);
+    expect(CODEX_CLI_EXECUTION_CAPABILITY_PROFILE).toBe('session_bound_command');
     expect(adapter.capabilities.streaming).toBe(true);
     expect(adapter.formatRequest({
       systemPrompt: 'Act as Codex.',
@@ -206,6 +210,33 @@ describe('Codex CLI provider leaf', () => {
       '-',
     ]);
     expect(runner.invocations[0]?.input).toBe('user: Summarize this.');
+  });
+
+  it('preserves the one-shot codex exec path for transient invocations', async () => {
+    const runner = createFakeAgentCliRunner([
+      { exitCode: 0, stdout: 'first', startedAt: 1, endedAt: 2 },
+      { exitCode: 0, stdout: 'second', startedAt: 3, endedAt: 4 },
+    ]);
+    const provider = new CodexCliProvider(createConfig(), { runner });
+
+    await provider.invoke({
+      role: 'workers',
+      input: { prompt: 'first transient task' },
+      traceId: TRACE_ID,
+    });
+    await provider.invoke({
+      role: 'workers',
+      input: { prompt: 'second transient task' },
+      traceId: TRACE_ID,
+    });
+
+    expect(runner.invocations).toHaveLength(2);
+    expect(runner.invocations.map((call) => call.command.args?.slice(0, 7))).toEqual([
+      ['--ask-for-approval', 'never', 'exec', '--ignore-user-config', '--sandbox', 'read-only', '--color'],
+      ['--ask-for-approval', 'never', 'exec', '--ignore-user-config', '--sandbox', 'read-only', '--color'],
+    ]);
+    expect(runner.invocations[0]?.input).toBe('first transient task');
+    expect(runner.invocations[1]?.input).toBe('second transient task');
   });
 
   it('constructs a provider with the default live runner without invoking it in tests', () => {
