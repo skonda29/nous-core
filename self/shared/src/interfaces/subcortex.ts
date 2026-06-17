@@ -303,6 +303,12 @@ export interface CliSessionContext {
   readonly provider: IModelProvider;
   readonly providerProtocol?: string;
   readonly executionCapabilityProfile?: CliExecutionCapabilityProfile;
+  /**
+   * Minimum execution capability required by the caller for this chat use case.
+   * Callers such as Cortex chat use this as a guardrail so command-bound CLI
+   * adapters are not treated as compatible with persistent-chat semantics.
+   */
+  readonly requiredExecutionCapabilityProfile?: CliExecutionCapabilityProfile;
 }
 
 export interface TeardownScope {

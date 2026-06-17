@@ -12,6 +12,13 @@ const CODEX_CLI_DEFAULT_MODEL = {
   available: true,
   authKind: 'local_session',
   availabilityReason: 'Uses the local Codex CLI login session; run `codex login` outside Nous.',
+  executionCapabilityProfile: 'session_bound_command',
+  roleCompatibility: {
+    'cortex-chat': expect.objectContaining({ selectable: false }),
+    'cortex-system': expect.objectContaining({ selectable: false }),
+    orchestrators: expect.objectContaining({ selectable: true }),
+    workers: expect.objectContaining({ selectable: true }),
+  },
 };
 const providerDefinitionsMock = vi.hoisted(() => ({
   PROVIDER_DEFINITIONS: [
@@ -49,6 +56,7 @@ const providerDefinitionsMock = vi.hoisted(() => ({
         purpose: 'api_key',
       },
       capabilities: { streaming: false },
+      executionCapabilityProfile: 'session_bound_command',
       isLocal: true,
       agentCli: {
         install: {
@@ -804,6 +812,22 @@ describe('preferences router', () => {
         'workers',
         bootstrapConstants.WELL_KNOWN_PROVIDER_IDS['codex-cli'],
       );
+    });
+
+    it('rejects Codex CLI for persistent Cortex chat roles', async () => {
+      const { ctx } = createMockContext();
+      const preferencesRouter = await loadPreferencesRouter();
+      const caller = preferencesRouter.createCaller(ctx);
+
+      const result = await caller.setRoleAssignment({
+        role: 'cortex-chat',
+        modelSpec: 'codex-cli:codex-cli/default',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('requires persistent_process');
+      expect(bootstrapMock.upsertProviderConfig).not.toHaveBeenCalled();
+      expect(bootstrapMock.updateRoleAssignment).not.toHaveBeenCalled();
     });
 
     it('clears role assignments when modelSpec is null', async () => {

@@ -1,8 +1,6 @@
-import type { ProviderId } from '@nous/shared';
 import { AGENT_CLI_PROTOCOL_ID } from '../../protocols/agent-cli/index.js';
-import type { ProviderDefinition } from '../../schemas/provider-definition.js';
+import type { ProviderDefinitionLeaf } from '../../schemas/provider-definition.js';
 
-export const CODEX_CLI_PROVIDER_ID = '10000000-0000-0000-0000-000000000004' as ProviderId;
 export const CODEX_CLI_DEFAULT_ENDPOINT = 'http://localhost';
 export const CODEX_CLI_DEFAULT_MODEL_ID = 'codex-cli/default';
 export const CODEX_CLI_DEFAULT_TIMEOUT_MS = 300_000;
@@ -11,7 +9,6 @@ export const CODEX_CLI_MAX_TIMEOUT_MS = 1_800_000;
 export const CODEX_CLI_PROVIDER_DEFINITION = {
   vendorKey: 'codex-cli',
   displayName: 'Codex CLI',
-  wellKnownProviderId: CODEX_CLI_PROVIDER_ID,
   providerType: 'text',
   providerClass: 'local_text',
   protocol: AGENT_CLI_PROTOCOL_ID,
@@ -29,6 +26,7 @@ export const CODEX_CLI_PROVIDER_DEFINITION = {
     nativeToolUse: false,
     healthCheck: false,
   },
+  executionCapabilityProfile: 'session_bound_command',
   isLocal: true,
   agentCli: {
     command: {
@@ -68,7 +66,7 @@ export const CODEX_CLI_PROVIDER_DEFINITION = {
       spawnErrorKind: 'spawn_error',
     },
     caveats: [
-      'Transient and batch execution use the one-shot `codex exec` command path; chat-bound fixtures are mediated by the runtime CLI session manager using the adapter execution capability profile, currently `session_bound_command` for Codex CLI rather than a strict long-lived process protocol.',
+      'Transient and batch execution use the one-shot `codex exec` command path. Codex CLI currently declares `session_bound_command`, not `persistent_process`, so Cortex persistent-chat surfaces must reject it through adapter capability guardrails rather than pretending it can provide a strict long-lived chat process.',
       'Live process execution shells out to the local Codex CLI; tests must inject a fake runner.',
       'Provider output prefers Codex CLI `--output-last-message` so chat receives the final assistant response rather than the execution transcript.',
       'Streaming uses `codex exec --json` JSONL events and falls back to `--output-last-message` only when no assistant deltas were parsed.',
@@ -79,7 +77,7 @@ export const CODEX_CLI_PROVIDER_DEFINITION = {
     ],
     targetIssueRefs: ['#280'],
   },
-} as const satisfies ProviderDefinition;
+} as const satisfies ProviderDefinitionLeaf;
 
 export {
   CODEX_CLI_PROVIDER_DEFINITION as providerDefinition,

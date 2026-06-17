@@ -2,7 +2,12 @@
  * Preferences tRPC router — API key management, system status, and model selection.
  */
 import { z } from 'zod';
-import { ModelRoleSchema, type ModelRole, type ProviderId } from '@nous/shared';
+import {
+  ModelRoleSchema,
+  type CliExecutionCapabilityProfile,
+  type ModelRole,
+  type ProviderId,
+} from '@nous/shared';
 import {
   PROVIDER_DEFINITIONS,
   type ProviderDefinition,
@@ -24,6 +29,11 @@ import {
   updateRoleAssignment,
   upsertProviderConfig,
 } from '../../bootstrap';
+import {
+  assertProviderDefinitionCompatibleWithRole,
+  roleCompatibilityMapForProviderDefinition,
+  type RoleCompatibilityResult,
+} from '../../provider-capability-compatibility';
 
 const SYSTEM_APP_ID = 'nous:system';
 
@@ -94,6 +104,8 @@ type AvailableModel = {
   available: boolean;
   authKind?: ProviderAuthKind;
   availabilityReason?: string;
+  executionCapabilityProfile?: CliExecutionCapabilityProfile;
+  roleCompatibility?: Partial<Record<ModelRole, RoleCompatibilityResult>>;
 };
 
 type CachedModelList = {
@@ -238,6 +250,20 @@ function providerAvailabilityReason(
   return agentCli?.auth.description ?? agentCli?.install?.notes;
 }
 
+function providerMetadataForModel(definition: ProviderDefinitionEntry): Pick<
+  AvailableModel,
+  'executionCapabilityProfile' | 'roleCompatibility'
+> {
+  const providerDefinition = definition as ProviderDefinition;
+  const roleCompatibility = roleCompatibilityMapForProviderDefinition(providerDefinition, MODEL_ROLES);
+  return {
+    ...(providerDefinition.executionCapabilityProfile
+      ? { executionCapabilityProfile: providerDefinition.executionCapabilityProfile }
+      : {}),
+    ...(providerDefinition.protocol === 'agent-cli' ? { roleCompatibility } : {}),
+  };
+}
+
 function apiKeyCredentialConfig(provider: Provider): {
   envVar: string;
   targetHost: string;
@@ -284,6 +310,7 @@ function defaultSelectableModels(): AvailableModel[] {
       available: true,
       authKind: providerAuthKind(definition),
       ...(availabilityReason ? { availabilityReason } : {}),
+      ...providerMetadataForModel(definition),
     };
   });
 }
@@ -470,6 +497,7 @@ async function fetchAnthropicModels(
       provider: 'anthropic',
       providerLabel: providerLabelFor('anthropic'),
       available: true,
+      ...providerMetadataForModel(providerDefinitionFor('anthropic')),
     }));
 
     console.info(
@@ -527,6 +555,7 @@ async function fetchOpenAIModels(apiKey: string): Promise<CloudModelFetchResult>
         provider: 'openai',
         providerLabel: providerLabelFor('openai'),
         available: true,
+        ...providerMetadataForModel(providerDefinitionFor('openai')),
       }));
 
     console.info(
@@ -768,6 +797,7 @@ export const preferencesRouter = router({
       provider: 'ollama' as const,
       providerLabel: providerLabelFor('ollama'),
       available: ollamaStatus.running,
+      ...providerMetadataForModel(providerDefinitionFor('ollama')),
     }));
 
     // Get cloud models from the provider APIs
@@ -831,6 +861,10 @@ export const preferencesRouter = router({
 
       try {
         const { providerId, providerConfig } = buildProviderSelection(selectedModel);
+        assertProviderDefinitionCompatibleWithRole(
+          input.role,
+          providerDefinitionFor(selectedModel.provider),
+        );
 
         await upsertProviderConfig(ctx, providerConfig);
         await updateRoleAssignment(ctx, input.role, providerId);

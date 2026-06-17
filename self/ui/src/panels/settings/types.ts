@@ -73,6 +73,13 @@ export interface AvailableModel {
   available: boolean
   authKind?: ProviderAuthKind
   availabilityReason?: string
+  executionCapabilityProfile?: 'one_shot_command' | 'session_bound_command' | 'persistent_process'
+  roleCompatibility?: Record<string, {
+    selectable: boolean
+    reason?: string
+    executionCapabilityProfile?: 'one_shot_command' | 'session_bound_command' | 'persistent_process'
+    requiredExecutionCapabilityProfile?: 'one_shot_command' | 'session_bound_command' | 'persistent_process'
+  }>
 }
 
 export interface RoleAssignmentDisplayEntry {

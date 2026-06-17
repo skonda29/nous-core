@@ -692,6 +692,7 @@ implements IPrincipalSystemGatewayRuntime, ISystemInboxSubmissionService {
       provider,
       providerProtocol: isCodexCliProvider ? 'agent-cli' : undefined,
       executionCapabilityProfile: isCodexCliProvider ? CODEX_CLI_EXECUTION_CAPABILITY_PROFILE : undefined,
+      requiredExecutionCapabilityProfile: isCodexCliProvider ? 'persistent_process' : undefined,
     });
   }
 

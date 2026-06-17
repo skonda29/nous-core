@@ -313,6 +313,19 @@ describe('ModelConfigPage', () => {
           available: true,
           authKind: 'local_session',
           availabilityReason: 'Uses the local Codex CLI login session; run `codex login` outside Nous.',
+          executionCapabilityProfile: 'session_bound_command',
+          roleCompatibility: {
+            'cortex-chat': {
+              selectable: false,
+              reason: 'Codex CLI declares session_bound_command, but cortex-chat requires persistent_process for persistent Cortex chat.',
+            },
+            'cortex-system': {
+              selectable: false,
+              reason: 'Codex CLI declares session_bound_command, but cortex-system requires persistent_process for persistent Cortex chat.',
+            },
+            orchestrators: { selectable: true },
+            workers: { selectable: true },
+          },
         },
       ],
     }),
@@ -363,6 +376,32 @@ describe('ModelConfigPage', () => {
     expect(codexGroups).toHaveLength(4)
     expect(codexOptions).toHaveLength(4)
     expect(codexOptions[0].textContent).toContain('local session required')
+  })
+
+  it('disables Codex CLI for persistent Cortex chat roles but leaves it selectable for workers', async () => {
+    const api = makeApi()
+    await act(async () => {
+      root.render(<ModelConfigPage api={api} />)
+      await flush()
+    })
+
+    const chatSelect = container.querySelector<HTMLSelectElement>('#role-select-cortex-chat')!
+    const systemSelect = container.querySelector<HTMLSelectElement>('#role-select-cortex-system')!
+    const workerSelect = container.querySelector<HTMLSelectElement>('#role-select-workers')!
+    const chatCodex = Array.from(chatSelect.querySelectorAll('option')).find(
+      (option) => option.value === 'codex-cli:codex-cli/default',
+    )!
+    const systemCodex = Array.from(systemSelect.querySelectorAll('option')).find(
+      (option) => option.value === 'codex-cli:codex-cli/default',
+    )!
+    const workerCodex = Array.from(workerSelect.querySelectorAll('option')).find(
+      (option) => option.value === 'codex-cli:codex-cli/default',
+    )!
+
+    expect(chatCodex.disabled).toBe(true)
+    expect(chatCodex.textContent).toContain('incompatible')
+    expect(systemCodex.disabled).toBe(true)
+    expect(workerCodex.disabled).toBe(false)
   })
 
   it('save button calls api.setRoleAssignment for cortex-chat', async () => {

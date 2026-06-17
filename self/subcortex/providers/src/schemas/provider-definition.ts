@@ -4,6 +4,8 @@ import {
   ProviderIdSchema,
   ProviderTypeSchema,
   ProviderVendorSchema,
+  CliExecutionCapabilityProfileSchema,
+  type CliExecutionCapabilityProfile,
   type ProviderClass,
   type ProviderId,
   type ProviderType,
@@ -135,6 +137,7 @@ export const ProviderDefinitionSchema = z.object({
   modelListEndpoint: z.string().min(1).optional(),
   healthCheckEndpoint: z.string().min(1).optional(),
   capabilities: ProviderCapabilityDefinitionSchema.optional(),
+  executionCapabilityProfile: CliExecutionCapabilityProfileSchema.optional(),
   agentCli: AgentCliProviderMetadataSchema.optional(),
 }).strict();
 
@@ -154,10 +157,15 @@ export interface ProviderDefinition {
   modelListEndpoint?: string;
   healthCheckEndpoint?: string;
   capabilities?: ProviderCapabilityDefinition;
+  executionCapabilityProfile?: CliExecutionCapabilityProfile;
   agentCli?: AgentCliProviderMetadata;
 }
 
-export type ProviderDefinitionInput = Omit<ProviderDefinition, 'vendorKey'> & {
+export type ProviderDefinitionLeaf = Omit<ProviderDefinition, 'wellKnownProviderId'> & {
+  wellKnownProviderId?: ProviderId;
+};
+
+export type ProviderDefinitionInput = Omit<ProviderDefinitionLeaf, 'vendorKey'> & {
   vendorKey: string;
 };
 

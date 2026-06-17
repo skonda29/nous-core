@@ -48,6 +48,18 @@ function modelOptionLabel(model: AvailableModel): string {
   return model.name
 }
 
+function roleCompatibilityReason(model: AvailableModel, role: ModelRole): string | undefined {
+  return model.roleCompatibility?.[role]?.selectable === false
+    ? model.roleCompatibility[role]?.reason
+    : undefined
+}
+
+function modelOptionLabelForRole(model: AvailableModel, role: ModelRole): string {
+  const base = modelOptionLabel(model)
+  const reason = roleCompatibilityReason(model, role)
+  return reason ? `${base} — incompatible: ${reason}` : base
+}
+
 export function ModelConfigPage({ api }: ModelConfigPageProps) {
   const [availableModels, setAvailableModels] = useState<AvailableModel[]>([])
   const [currentValues, setCurrentValues] = useState<RoleValues>(emptyRoleValues)
@@ -158,8 +170,13 @@ export function ModelConfigPage({ api }: ModelConfigPageProps) {
                 {Object.entries(modelsByProvider).map(([provider, models]) => (
                   <optgroup key={provider} label={optgroupLabel(provider, models)}>
                     {models.filter((m) => m.available).map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {modelOptionLabel(m)}
+                      <option
+                        key={m.id}
+                        value={m.id}
+                        disabled={m.roleCompatibility?.[role]?.selectable === false}
+                        title={roleCompatibilityReason(m, role)}
+                      >
+                        {modelOptionLabelForRole(m, role)}
                       </option>
                     ))}
                   </optgroup>

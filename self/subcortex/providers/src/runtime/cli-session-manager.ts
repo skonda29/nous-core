@@ -67,6 +67,9 @@ export class CliSessionManager implements ICliSessionManager {
       return context.provider;
     }
 
+    const executionCapabilityProfile = resolveExecutionCapabilityProfile(context);
+    assertExecutionCapabilityCompatible(context, executionCapabilityProfile);
+
     const key = deriveProviderSessionKey(context);
     const serializedKey = serializeProviderSessionKey(key);
     const existing = this.sessions.get(serializedKey);
@@ -75,7 +78,6 @@ export class CliSessionManager implements ICliSessionManager {
     }
 
     const restartCount = existing ? existing.restartCount + 1 : 0;
-    const executionCapabilityProfile = resolveExecutionCapabilityProfile(context);
     this.sessions.delete(serializedKey);
     const provider = this.createSessionProvider(
       key,
@@ -278,6 +280,37 @@ function resolveExecutionCapabilityProfile(
   context: CliSessionContext,
 ): CliExecutionCapabilityProfile {
   return context.executionCapabilityProfile ?? 'session_bound_command';
+}
+
+const EXECUTION_CAPABILITY_RANK: Record<CliExecutionCapabilityProfile, number> = {
+  one_shot_command: 0,
+  session_bound_command: 1,
+  persistent_process: 2,
+};
+
+function assertExecutionCapabilityCompatible(
+  context: CliSessionContext,
+  actual: CliExecutionCapabilityProfile,
+): void {
+  const required = context.requiredExecutionCapabilityProfile;
+  if (!required) return;
+
+  if (EXECUTION_CAPABILITY_RANK[actual] >= EXECUTION_CAPABILITY_RANK[required]) {
+    return;
+  }
+
+  throw new NousError(
+    'CLI provider execution capability is incompatible with this chat surface.',
+    'PROVIDER_CHAT_CAPABILITY_UNSUPPORTED',
+    {
+      providerId: context.providerId,
+      providerProtocol: context.providerProtocol,
+      executionCapabilityProfile: actual,
+      requiredExecutionCapabilityProfile: required,
+      sessionId: context.sessionId,
+      scope: context.scope,
+    },
+  );
 }
 
 export function deriveProviderSessionKey(context: CliSessionContext): ProviderSessionKey {

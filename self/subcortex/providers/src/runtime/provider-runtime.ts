@@ -31,6 +31,7 @@ import {
   PROVIDER_DEFINITIONS,
   type ProviderDefinition,
 } from '../provider-definitions.js';
+import { isKnownProviderIdForVendor } from '../provider-identity.js';
 import { resolveProviderFactory } from '../provider-factories.js';
 
 export interface ProviderRegistryOptions {
@@ -192,7 +193,7 @@ export class ProviderRegistry {
     }
 
     const byProviderId = PROVIDER_DEFINITIONS.find(
-      (definition) => definition.wellKnownProviderId === config.id,
+      (definition) => isKnownProviderIdForVendor(config.id, definition.vendorKey),
     );
     if (byProviderId) return byProviderId;
 

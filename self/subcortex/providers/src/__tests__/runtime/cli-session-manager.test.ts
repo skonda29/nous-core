@@ -134,7 +134,23 @@ describe('CliSessionManager', () => {
     expect(manager.getActiveSessionCount()).toBe(0);
   });
 
-  it('creates and reuses a session-aware provider for the same chat key', async () => {
+  it('fails closed when a chat surface requires persistent process support but adapter is command-bound', () => {
+    const provider = new FakeProvider();
+    const manager = new CliSessionManager();
+
+    expect(() => manager.resolveForChatTurn({
+      providerId: PROVIDER_ID,
+      sessionId: SESSION_ID,
+      scope: 'principal',
+      provider,
+      providerProtocol: AGENT_CLI_PROTOCOL_ID,
+      executionCapabilityProfile: 'session_bound_command',
+      requiredExecutionCapabilityProfile: 'persistent_process',
+    })).toThrowError(/incompatible/i);
+    expect(manager.getActiveSessionCount()).toBe(0);
+  });
+
+  it('creates and reuses a session-aware provider for the same compatible chat key', async () => {
     const provider = new FakeProvider();
     const createPinnedProvider = vi.fn(({ provider: inner }) => inner);
     const manager = new CliSessionManager({ createPinnedProvider });
@@ -145,7 +161,8 @@ describe('CliSessionManager', () => {
       scope: 'principal',
       provider,
       providerProtocol: AGENT_CLI_PROTOCOL_ID,
-      executionCapabilityProfile: 'session_bound_command',
+      executionCapabilityProfile: 'persistent_process',
+      requiredExecutionCapabilityProfile: 'persistent_process',
     });
     const second = manager.resolveForChatTurn({
       providerId: PROVIDER_ID,
@@ -153,6 +170,8 @@ describe('CliSessionManager', () => {
       scope: 'principal',
       provider,
       providerProtocol: AGENT_CLI_PROTOCOL_ID,
+      executionCapabilityProfile: 'persistent_process',
+      requiredExecutionCapabilityProfile: 'persistent_process',
     });
 
     expect(second).toBe(first);
@@ -164,7 +183,7 @@ describe('CliSessionManager', () => {
 
     expect(provider.invokeCount).toBe(2);
     expect(manager.getSessionSnapshots()[0]).toMatchObject({
-      executionCapabilityProfile: 'session_bound_command',
+      executionCapabilityProfile: 'persistent_process',
       state: 'active',
       turnCount: 2,
     });

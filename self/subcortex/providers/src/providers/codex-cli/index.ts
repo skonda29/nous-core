@@ -10,7 +10,6 @@ export {
   CODEX_CLI_DEFAULT_TIMEOUT_MS,
   CODEX_CLI_MAX_TIMEOUT_MS,
   CODEX_CLI_PROVIDER_DEFINITION,
-  CODEX_CLI_PROVIDER_ID,
   providerDefinition,
 } from './definition.js';
 export {
