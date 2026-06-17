@@ -26,6 +26,7 @@ import {
   type IAgentGatewayFactory,
   type IModelProvider,
   type ModelRole,
+  type ModelProviderConfig,
   type ProjectId,
   type ThinkingUnavailable,
   type ToolDefinition,
@@ -85,6 +86,10 @@ const DEFAULT_MODEL_ROLE_BY_CLASS: Record<AgentClass, ModelRole> = {
 function deriveDefaultModelRole(agentClass: AgentClass | undefined): ModelRole {
   if (!agentClass) return 'cortex-chat'; // I5 first-run fallback
   return DEFAULT_MODEL_ROLE_BY_CLASS[agentClass];
+}
+
+function deriveEffectiveAgentClass(agentClass: AgentClass | undefined): AgentClass {
+  return agentClass ?? 'Cortex::Principal';
 }
 
 /**
@@ -227,6 +232,18 @@ export class AgentGateway implements IAgentGateway {
     return this.cachedAdapter;
   }
 
+  private tryGetProviderConfig(provider: IModelProvider): ModelProviderConfig | undefined {
+    try {
+      return provider.getConfig();
+    } catch (error) {
+      this.log.warn('provider config unavailable', {
+        agentClass: this.agentClass,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return undefined;
+    }
+  }
+
   getInboxHandle() {
     return this.inbox.getHandle();
   }
@@ -277,21 +294,22 @@ export class AgentGateway implements IAgentGateway {
         const provider = await this.resolveProvider(validInput, traceId);
 
         const adapter = this.resolveAdapterFromProvider(provider);
-        const providerConfig = provider.getConfig();
+        const providerConfig = this.tryGetProviderConfig(provider);
+        const effectiveAgentClass = deriveEffectiveAgentClass(this.agentClass);
         const providerType = resolveProviderTypeFromConfig(provider);
         const promptOutput = this.config.harness?.promptFormatter
           ? this.config.harness.promptFormatter({
-              agentClass: this.agentClass,
+              agentClass: effectiveAgentClass,
               taskInstructions: validInput.taskInstructions,
               baseSystemPrompt: this.config.baseSystemPrompt,
               execution: validInput.execution,
               tools,
             })
           : composeFromProfile(
-              resolveAgentProfile(this.agentClass, providerType),
+              resolveAgentProfile(effectiveAgentClass, providerType),
               adapter.capabilities,
               {
-                agentClass: this.agentClass,
+                agentClass: effectiveAgentClass,
                 taskInstructions: validInput.taskInstructions,
                 baseSystemPrompt: this.config.baseSystemPrompt,
                 execution: validInput.execution,
@@ -326,7 +344,7 @@ export class AgentGateway implements IAgentGateway {
 
         this.log.debug('invoke provider', {
           agentClass: this.agentClass,
-          providerId: providerConfig.id,
+          providerId: providerConfig?.id,
           providerType,
           hasHarness: !!this.config.harness,
           inputKeys: Object.keys(formatted.input),
