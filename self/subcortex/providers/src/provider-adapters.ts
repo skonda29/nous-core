@@ -2,6 +2,7 @@
 import type { ProviderAdapterModule } from './schemas/provider-adapter.js';
 import { providerAdapter as anthropicProviderAdapter } from './providers/anthropic/adapter.js';
 import { providerAdapter as codexCliProviderAdapter } from './providers/codex-cli/adapter.js';
+import { providerAdapter as deepinfraProviderAdapter } from './providers/deepinfra/adapter.js';
 import { providerAdapter as githubCopilotCliProviderAdapter } from './providers/github-copilot-cli/adapter.js';
 import { providerAdapter as groqProviderAdapter } from './providers/groq/adapter.js';
 import { providerAdapter as llamaCppProviderAdapter } from './providers/llama-cpp/adapter.js';
@@ -11,6 +12,7 @@ import { providerAdapter as openaiProviderAdapter } from './providers/openai/ada
 export * from './schemas/provider-adapter.js';
 export { providerAdapter as anthropicAdapter, createAnthropicAdapter } from './providers/anthropic/adapter.js';
 export { providerAdapter as codexCliAdapter, CODEX_CLI_EXECUTION_CAPABILITY_PROFILE, createCodexCliAdapter, renderCodexCliPrompt } from './providers/codex-cli/adapter.js';
+export { providerAdapter as deepinfraAdapter } from './providers/deepinfra/adapter.js';
 export { providerAdapter as githubCopilotCliAdapter } from './providers/github-copilot-cli/adapter.js';
 export { providerAdapter as groqAdapter } from './providers/groq/adapter.js';
 export { providerAdapter as llamaCppAdapter } from './providers/llama-cpp/adapter.js';
@@ -20,6 +22,7 @@ export { providerAdapter as openaiAdapter, createChatCompletionsAdapter } from '
 export const CERTIFIED_PROVIDER_ADAPTER_MODULES = [
   anthropicProviderAdapter,
   codexCliProviderAdapter,
+  deepinfraProviderAdapter,
   githubCopilotCliProviderAdapter,
   groqProviderAdapter,
   llamaCppProviderAdapter,

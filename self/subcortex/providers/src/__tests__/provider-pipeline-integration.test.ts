@@ -59,6 +59,7 @@ describe('provider definition to adapter to registry pipeline', () => {
     expect(PROVIDER_DEFINITIONS.map((definition) => definition.vendorKey)).toEqual([
       'anthropic',
       'codex-cli',
+      'deepinfra',
       'github-copilot-cli',
       'groq',
       'llama-cpp',
@@ -131,6 +132,11 @@ describe('provider definition to adapter to registry pipeline', () => {
         expected: 'Chat response',
       },
       {
+        adapterKey: 'chat-completions',
+        output: { choices: [{ message: { content: 'DeepInfra response' } }] },
+        expected: 'DeepInfra response',
+      },
+      {
         adapterKey: 'codex-cli',
         output: 'Codex CLI response',
         expected: 'Codex CLI response',
@@ -172,6 +178,7 @@ describe('provider definition to adapter to registry pipeline', () => {
       'codex-cli': CodexCliProvider,
       'github-copilot-cli': GitHubCopilotCliProvider,
       'llama-cpp': ChatCompletionsProvider,
+      'deepinfra': ChatCompletionsProvider,
       openai: ChatCompletionsProvider,
       groq: ChatCompletionsProvider,
       ollama: OllamaProvider,
