@@ -4,6 +4,7 @@ import {
   providerAdapter,
   renderGhCopilotPrompt,
 } from '../../providers/github-copilot-cli/adapter.js';
+import { AGENT_CLI_PROTOCOL_ID } from '../../protocols/agent-cli/index.js';
 
 describe('github-copilot-cli adapter — capabilities', () => {
   it('has nativeToolUse false', () => {
@@ -16,6 +17,10 @@ describe('github-copilot-cli adapter — capabilities', () => {
 
   it('has adapterKey github-copilot-cli', () => {
     expect(providerAdapter.adapterKey).toBe('github-copilot-cli');
+  });
+
+  it('has protocol agent-cli', () => {
+    expect(providerAdapter.protocol).toBe(AGENT_CLI_PROTOCOL_ID);
   });
 });
 
@@ -61,7 +66,7 @@ describe('renderGhCopilotPrompt', () => {
 
 describe('providerAdapter.formatRequest', () => {
   it('returns a formatted request with prompt string', () => {
-    const result = providerAdapter.formatRequest({
+    const result = providerAdapter.create().formatRequest({
       systemPrompt: 'You are helpful.',
       context: [{ role: 'user', content: 'list all files' }],
     } as any);
@@ -74,7 +79,7 @@ describe('providerAdapter.parseResponse', () => {
   const fakeTraceId = 'trace-001' as TraceId;
 
   it('returns response text from plain stdout', () => {
-    const result = providerAdapter.parseResponse('ls -la', fakeTraceId);
+    const result = providerAdapter.create().parseResponse('ls -la', fakeTraceId);
     expect(result.response).toBe('ls -la');
     expect(result.contentType).toBe('text');
     expect(result.toolCalls).toEqual([]);
@@ -82,27 +87,27 @@ describe('providerAdapter.parseResponse', () => {
 
   it('strips ANSI escape codes from stdout', () => {
     const ansiOutput = '\x1b[32mls -la\x1b[0m';
-    const result = providerAdapter.parseResponse(ansiOutput, fakeTraceId);
+    const result = providerAdapter.create().parseResponse(ansiOutput, fakeTraceId);
     expect(result.response).toBe('ls -la');
   });
 
   it('returns empty response for empty stdout without throwing', () => {
-    const result = providerAdapter.parseResponse('', fakeTraceId);
+    const result = providerAdapter.create().parseResponse('', fakeTraceId);
     expect(result.response).toBe('');
     expect(result.toolCalls).toEqual([]);
   });
 
   it('returns fallback and does not throw for null input', () => {
-    expect(() => providerAdapter.parseResponse(null, fakeTraceId)).not.toThrow();
-    const result = providerAdapter.parseResponse(null, fakeTraceId);
+    expect(() => providerAdapter.create().parseResponse(null, fakeTraceId)).not.toThrow();
+    const result = providerAdapter.create().parseResponse(null, fakeTraceId);
     expect(typeof result.response).toBe('string');
   });
 
   it('returns fallback and does not throw for object input', () => {
-    expect(() => providerAdapter.parseResponse({ unexpected: true }, fakeTraceId)).not.toThrow();
+    expect(() => providerAdapter.create().parseResponse({ unexpected: true }, fakeTraceId)).not.toThrow();
   });
 
   it('returns fallback and does not throw for undefined input', () => {
-    expect(() => providerAdapter.parseResponse(undefined, fakeTraceId)).not.toThrow();
+    expect(() => providerAdapter.create().parseResponse(undefined, fakeTraceId)).not.toThrow();
   });
 });

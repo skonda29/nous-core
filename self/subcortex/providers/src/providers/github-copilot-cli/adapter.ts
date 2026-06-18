@@ -104,9 +104,7 @@ function createGithubCopilotCliAdapter(): ProviderAdapter {
   };
 }
 
-// Validate the module shape at import time — throws if capabilities or keys
-// are mismatched. Result is used to source `adapterKey` for the export.
-const _providerAdapterModule = defineProviderAdapter({
+export const providerAdapter = defineProviderAdapter({
   adapterKey: 'github-copilot-cli',
   displayName: 'GitHub Copilot CLI',
   protocol: AGENT_CLI_PROTOCOL_ID,
@@ -116,15 +114,3 @@ const _providerAdapterModule = defineProviderAdapter({
     return createGithubCopilotCliAdapter();
   },
 });
-
-/**
- * Combined export — module metadata + adapter instance methods.
- *
- * Merges `adapterKey` from the validated module with the `ProviderAdapter`
- * interface (capabilities, formatRequest, parseResponse) so that both the
- * provider registry and direct test access work without extra indirection.
- */
-export const providerAdapter = Object.assign(
-  createGithubCopilotCliAdapter(),
-  { adapterKey: _providerAdapterModule.adapterKey },
-);
