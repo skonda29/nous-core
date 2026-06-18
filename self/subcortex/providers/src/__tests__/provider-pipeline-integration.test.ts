@@ -13,11 +13,13 @@ import {
   PROVIDER_DEFINITIONS,
   ProviderRegistry,
   buildAdapterResolver,
+  createFakeAgentCliRunner,
   defineProvider,
   defineProviderAdapter,
   resolveProviderDefinition,
   textAdapter,
 } from '../index.js';
+import { GITHUB_COPILOT_CLI_PROVIDER_DEFINITION } from '../providers/github-copilot-cli/index.js';
 
 const TRACE_ID = '550e8400-e29b-41d4-a716-446655440000' as TraceId;
 
@@ -54,6 +56,7 @@ describe('provider definition to adapter to registry pipeline', () => {
     expect(PROVIDER_DEFINITIONS.map((definition) => definition.vendorKey)).toEqual([
       'anthropic',
       'codex-cli',
+      'github-copilot-cli',
       'ollama',
       'openai',
     ]);
@@ -238,5 +241,65 @@ describe('provider definition to adapter to registry pipeline', () => {
       'ok',
     );
     expect(resolver.resolveAdapter('missing').capabilities).toEqual(textAdapter.capabilities);
+  });
+});
+
+describe('github-copilot-cli — role compatibility', () => {
+  it('declares session_bound_command profile', () => {
+    expect(GITHUB_COPILOT_CLI_PROVIDER_DEFINITION.executionCapabilityProfile).toBe(
+      'session_bound_command',
+    );
+  });
+
+  it('is not persistent_process (cannot be assigned to Cortex Chat/System)', () => {
+    expect(GITHUB_COPILOT_CLI_PROVIDER_DEFINITION.executionCapabilityProfile).not.toBe(
+      'persistent_process',
+    );
+  });
+});
+
+describe('github-copilot-cli — fake runner invocation', () => {
+  it('returns parsed output on successful run', async () => {
+    const fakeRunner = createFakeAgentCliRunner([
+      { exitCode: 0, stdout: 'ls -la', stderr: '' },
+    ]);
+    const config = configFromDefinition(resolveProviderDefinition('github-copilot-cli') as any);
+    const provider = new GitHubCopilotCliProvider(config as any, { runner: fakeRunner });
+    const response = await provider.invoke({
+      role: 'workers',
+      input: { prompt: 'How do I list files?' },
+      traceId: TRACE_ID,
+    } as any);
+    expect(response.output).toBe('ls -la');
+  });
+
+  it('throws on non-zero exit', async () => {
+    const fakeRunner = createFakeAgentCliRunner([
+      { exitCode: 1, stdout: '', stderr: 'error: authentication required' },
+    ]);
+    const config = configFromDefinition(resolveProviderDefinition('github-copilot-cli') as any);
+    const provider = new GitHubCopilotCliProvider(config as any, { runner: fakeRunner });
+    await expect(
+      provider.invoke({
+        role: 'workers',
+        input: { prompt: 'list files' },
+        traceId: TRACE_ID,
+      } as any),
+    ).rejects.toThrow('[github-copilot-cli]');
+  });
+
+  it('throws on timeout', async () => {
+    const fakeRunner = createFakeAgentCliRunner([
+      { timedOut: true },
+    ]);
+    const config = configFromDefinition(resolveProviderDefinition('github-copilot-cli') as any);
+    const provider = new GitHubCopilotCliProvider(config as any, { runner: fakeRunner });
+    await expect(
+      provider.invoke({
+        role: 'workers',
+        input: { prompt: 'list files' },
+        traceId: TRACE_ID,
+      } as any),
+    ).rejects.toThrow('[github-copilot-cli]');
   });
 });
