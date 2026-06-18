@@ -50,7 +50,7 @@ export const CODEX_CLI_PROVIDER_DEFINITION = {
 } as const satisfies ProviderDefinitionLeaf;
 ```
 
-`session_bound_command` means the CLI can maintain command/session context but does not expose a strict persistent process suitable for Cortex persistent chat. Cortex Chat/System require `persistent_process`; Settings disables/rejects command-bound CLI providers for those roles while leaving them available for compatible agent roles.
+`session_bound_command` means the CLI can maintain command/session context but does not expose a strict persistent process suitable for Cortex persistent chat. Cortex Chat/System require `persistent_process`; Settings disables/rejects command-bound CLI providers for those roles while leaving them available for compatible agent roles. See the [CLI Provider Guide](/docs/development/provider-adapters/cli-provider-guide) for the full CLI contributor contract including selection-time guardrails and the contributor checklist.
 
 ## Protocol Decision Table
 
