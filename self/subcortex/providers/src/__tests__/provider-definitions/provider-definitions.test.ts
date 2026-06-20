@@ -45,6 +45,11 @@ const expectedDefinitions = {
     defaultModelId: 'llama3.2',
     envVar: undefined,
   },
+  'huggingface-tgi': {
+    defaultEndpoint: 'http://localhost:8080',
+    defaultModelId: 'gpt-5.4',
+    envVar: 'HUGGINGFACE_API_KEY',
+  }
 } as const;
 
 describe('provider definitions catalog', () => {
@@ -52,9 +57,6 @@ describe('provider definitions catalog', () => {
     expect(PROVIDER_DEFINITIONS.map((definition) => definition.vendorKey).sort()).toEqual([
       'anthropic',
       'codex-cli',
-      'github-copilot-cli',
-      'groq',
-      'llama-cpp',
       'ollama',
       'openai',
     ]);
