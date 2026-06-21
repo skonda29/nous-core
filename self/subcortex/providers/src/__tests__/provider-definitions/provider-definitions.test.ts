@@ -30,6 +30,11 @@ const expectedDefinitions = {
     defaultModelId: 'llama3.2',
     envVar: undefined,
   },
+  'llama-cpp': {
+    defaultEndpoint: 'http://localhost:8080',
+    defaultModelId: 'llama3.2',
+    envVar: undefined,
+  },
 } as const;
 
 describe('provider definitions catalog', () => {
@@ -37,6 +42,7 @@ describe('provider definitions catalog', () => {
     expect(PROVIDER_DEFINITIONS.map((definition) => definition.vendorKey).sort()).toEqual([
       'anthropic',
       'codex-cli',
+      'llama-cpp',
       'ollama',
       'openai',
     ]);
@@ -76,6 +82,7 @@ describe('provider definitions catalog', () => {
       join('providers', 'codex-cli', 'definition.ts'),
       join('protocols', 'openai-api', 'provider.ts'),
       join('providers', 'ollama', 'implementation.ts'),
+      join('providers', 'llama-cpp', 'definition.ts'),
     ];
     const forbidden = [
       /fetch/,

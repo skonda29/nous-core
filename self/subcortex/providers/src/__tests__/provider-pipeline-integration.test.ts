@@ -53,6 +53,7 @@ describe('provider definition to adapter to registry pipeline', () => {
     expect(PROVIDER_DEFINITIONS.map((definition) => definition.vendorKey)).toEqual([
       'anthropic',
       'codex-cli',
+      'llama-cpp',
       'ollama',
       'openai',
     ]);
@@ -160,6 +161,7 @@ describe('provider definition to adapter to registry pipeline', () => {
     const expectedClassByVendor = {
       anthropic: AnthropicProvider,
       'codex-cli': CodexCliProvider,
+      'llama-cpp': ChatCompletionsProvider,
       openai: ChatCompletionsProvider,
       ollama: OllamaProvider,
     };
