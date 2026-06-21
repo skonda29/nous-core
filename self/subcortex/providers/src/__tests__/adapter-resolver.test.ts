@@ -60,6 +60,7 @@ describe('adapter resolver', () => {
       'chat-completions',
       'ollama',
       'chat-completions',
+      'qwen-code',
       'text',
     ]);
   });

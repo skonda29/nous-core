@@ -7,6 +7,7 @@ import { providerAdapter as groqProviderAdapter } from './providers/groq/adapter
 import { providerAdapter as llamaCppProviderAdapter } from './providers/llama-cpp/adapter.js';
 import { providerAdapter as ollamaProviderAdapter } from './providers/ollama/adapter.js';
 import { providerAdapter as openaiProviderAdapter } from './providers/openai/adapter.js';
+import { providerAdapter as qwenCodeProviderAdapter } from './providers/qwen-code/adapter.js';
 
 export * from './schemas/provider-adapter.js';
 export { providerAdapter as anthropicAdapter, createAnthropicAdapter } from './providers/anthropic/adapter.js';
@@ -16,6 +17,7 @@ export { providerAdapter as groqAdapter } from './providers/groq/adapter.js';
 export { providerAdapter as llamaCppAdapter } from './providers/llama-cpp/adapter.js';
 export { providerAdapter as ollamaAdapter, createOllamaAdapter, isToolCapableModel } from './providers/ollama/adapter.js';
 export { providerAdapter as openaiAdapter, createChatCompletionsAdapter } from './providers/openai/adapter.js';
+export { providerAdapter as qwenCodeAdapter, QWEN_CODE_EXECUTION_CAPABILITY_PROFILE, createQwenCodeAdapter, renderQwenCodePrompt } from './providers/qwen-code/adapter.js';
 
 export const CERTIFIED_PROVIDER_ADAPTER_MODULES = [
   anthropicProviderAdapter,
@@ -25,6 +27,7 @@ export const CERTIFIED_PROVIDER_ADAPTER_MODULES = [
   llamaCppProviderAdapter,
   ollamaProviderAdapter,
   openaiProviderAdapter,
+  qwenCodeProviderAdapter,
 ] as const satisfies readonly ProviderAdapterModule[];
 
 export type CertifiedProviderAdapterKey =

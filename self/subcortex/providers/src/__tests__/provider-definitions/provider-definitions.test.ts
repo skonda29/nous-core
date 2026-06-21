@@ -43,6 +43,10 @@ const expectedDefinitions = {
   'llama-cpp': {
     defaultEndpoint: 'http://localhost:8080',
     defaultModelId: 'llama3.2',
+  },
+  'qwen-code': {
+    defaultEndpoint: 'http://localhost',
+    defaultModelId: 'qwen-code/default',
     envVar: undefined,
   },
 } as const;
@@ -57,6 +61,7 @@ describe('provider definitions catalog', () => {
       'llama-cpp',
       'ollama',
       'openai',
+      'qwen-code',
     ]);
   });
 
@@ -95,6 +100,7 @@ describe('provider definitions catalog', () => {
       join('protocols', 'openai-api', 'provider.ts'),
       join('providers', 'ollama', 'implementation.ts'),
       join('providers', 'llama-cpp', 'definition.ts'),
+      join('providers', 'qwen-code', 'definition.ts'),
     ];
     const forbidden = [
       /fetch/,

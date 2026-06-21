@@ -33,6 +33,7 @@ export {
 export * from './protocols/agent-cli/index.js';
 export { CodexCliProvider } from './providers/codex-cli/implementation.js';
 export { GitHubCopilotCliProvider } from './providers/github-copilot-cli/provider.js';
+export { QwenCodeProvider } from './providers/qwen-code/implementation.js';
 export {
   createTextAdapter,
   textAdapter,

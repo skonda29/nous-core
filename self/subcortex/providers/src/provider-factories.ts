@@ -7,6 +7,7 @@ import { providerFactory as groqProviderFactory } from './providers/groq/provide
 import { providerFactory as llamaCppProviderFactory } from './providers/llama-cpp/provider.js';
 import { providerFactory as ollamaProviderFactory } from './providers/ollama/provider.js';
 import { providerFactory as openaiProviderFactory } from './providers/openai/provider.js';
+import { providerFactory as qwenCodeProviderFactory } from './providers/qwen-code/provider.js';
 
 export * from './schemas/provider-factory.js';
 
@@ -18,6 +19,7 @@ export const CERTIFIED_PROVIDER_FACTORIES = [
   llamaCppProviderFactory,
   ollamaProviderFactory,
   openaiProviderFactory,
+  qwenCodeProviderFactory,
 ] as const satisfies readonly ProviderFactoryModule[];
 
 export type CertifiedProviderFactoryVendorKey =
