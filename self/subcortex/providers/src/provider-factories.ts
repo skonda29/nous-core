@@ -2,9 +2,13 @@
 import type { ProviderFactoryModule } from './schemas/provider-factory.js';
 import { providerFactory as anthropicProviderFactory } from './providers/anthropic/provider.js';
 import { providerFactory as codexCliProviderFactory } from './providers/codex-cli/provider.js';
+<<<<<<< HEAD
 import { providerFactory as githubCopilotCliProviderFactory } from './providers/github-copilot-cli/provider.js';
 import { providerFactory as groqProviderFactory } from './providers/groq/provider.js';
 import { providerFactory as llamaCppProviderFactory } from './providers/llama-cpp/provider.js';
+=======
+import { providerFactory as huggingfaceTgiProviderFactory } from './providers/huggingface-tgi/provider.js';
+>>>>>>> 74d90e0b (feat(provider): adding updates to generated catalogs)
 import { providerFactory as ollamaProviderFactory } from './providers/ollama/provider.js';
 import { providerFactory as openaiProviderFactory } from './providers/openai/provider.js';
 
@@ -16,6 +20,7 @@ export const CERTIFIED_PROVIDER_FACTORIES = [
   githubCopilotCliProviderFactory,
   groqProviderFactory,
   llamaCppProviderFactory,
+  huggingfaceTgiProviderFactory,
   ollamaProviderFactory,
   openaiProviderFactory,
 ] as const satisfies readonly ProviderFactoryModule[];
