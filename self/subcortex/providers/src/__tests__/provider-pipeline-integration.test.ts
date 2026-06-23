@@ -9,6 +9,7 @@ import {
   CERTIFIED_PROVIDER_FACTORIES,
   CodexCliProvider,
   GitHubCopilotCliProvider,
+  MistralProvider,
   OllamaProvider,
   PROVIDER_DEFINITIONS,
   ProviderRegistry,
@@ -62,9 +63,9 @@ describe('provider definition to adapter to registry pipeline', () => {
       'github-copilot-cli',
       'groq',
       'llama-cpp',
+      'mistral',
       'ollama',
-      'openai',
-    ]);
+      'openai',    ]);
     expect(resolveProviderDefinition('anthropic').defaultModelId).toBe(
       'claude-sonnet-4-20250514',
     );
@@ -165,6 +166,7 @@ describe('provider definition to adapter to registry pipeline', () => {
     process.env.ANTHROPIC_API_KEY = 'test-anthropic-key';
     process.env.OPENAI_API_KEY = 'test-openai-key';
     process.env.GROQ_API_KEY = 'test-groq-key';
+    process.env.MISTRAL_API_KEY = 'test-mistral-key';
 
     const registry = new ProviderRegistry(createEmptyConfig());
     const expectedClassByVendor = {
@@ -174,6 +176,7 @@ describe('provider definition to adapter to registry pipeline', () => {
       'llama-cpp': ChatCompletionsProvider,
       openai: ChatCompletionsProvider,
       groq: ChatCompletionsProvider,
+      mistral: MistralProvider,
       ollama: OllamaProvider,
     };
 
@@ -251,6 +254,7 @@ describe('provider definition to adapter to registry pipeline', () => {
     expect(resolver.resolveAdapter('missing').capabilities).toEqual(textAdapter.capabilities);
   });
 });
+
 
 describe('github-copilot-cli — role compatibility', () => {
   it('declares session_bound_command profile', () => {
