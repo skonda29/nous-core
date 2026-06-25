@@ -9,7 +9,7 @@ import {
 } from '../../schemas/provider-adapter.js';
 import type { ParsedModelOutput } from '../../shared/output.js';
 
-// Strips ANSI terminal escape sequences (e.g. colour codes emitted by gh copilot).
+// Strips ANSI terminal escape sequences (e.g. colour codes emitted by gh models run).
 const ANSI_RE = /\x1b\[[0-9;]*[A-Za-z]/g;
 
 export const GITHUB_COPILOT_CLI_EXECUTION_CAPABILITY_PROFILE = 'session_bound_command' as const;
@@ -22,7 +22,7 @@ const GITHUB_COPILOT_CLI_ADAPTER_CAPABILITIES: AdapterCapabilities = {
 };
 
 /**
- * Renders a plain-text prompt string for `gh copilot suggest`.
+ * Renders a plain-text prompt string for `gh models run`.
  *
  * Accepts minimal context objects (only `role` and `content` are consumed)
  * so that both proper GatewayContextFrame values and lightweight test

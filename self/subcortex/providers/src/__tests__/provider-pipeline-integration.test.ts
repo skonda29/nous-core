@@ -19,7 +19,10 @@ import {
   resolveProviderDefinition,
   textAdapter,
 } from '../index.js';
-import { GITHUB_COPILOT_CLI_PROVIDER_DEFINITION } from '../providers/github-copilot-cli/index.js';
+import {
+  GITHUB_COPILOT_CLI_PROVIDER_DEFINITION,
+  createGhProcessRunner,
+} from '../providers/github-copilot-cli/index.js';
 
 const TRACE_ID = '550e8400-e29b-41d4-a716-446655440000' as TraceId;
 
@@ -273,8 +276,10 @@ describe('github-copilot-cli — fake runner invocation', () => {
     expect(response.output).toBe('ls -la');
 
     const call = fakeRunner.calls[0];
-    expect(call.invocation.command.args).toContain('--target');
-    expect(call.invocation.command.args).toContain('shell');
+    expect(call.invocation.command.args).toEqual(['models', 'run', 'openai/gpt-4o-mini']);
+    // Prompt is delivered via stdin, never through argv.
+    expect(call.invocation.input).toBe('How do I list files?');
+    expect(call.invocation.command.args).not.toContain('How do I list files?');
   });
 
   it('throws on non-zero exit', async () => {
@@ -305,5 +310,121 @@ describe('github-copilot-cli — fake runner invocation', () => {
         traceId: TRACE_ID,
       } as any),
     ).rejects.toThrow('[github-copilot-cli]');
+  });
+});
+
+describe('github-copilot-cli — process runner', () => {
+  it('honors environmentPolicy allowlist (does not leak unrelated parent env)', async () => {
+    const runner = createGhProcessRunner({
+      baseEnv: {
+        ...process.env,
+        NOUS_GH_ALLOWED: 'ok',
+        NOUS_GH_SECRET: 'should-not-leak',
+      },
+    });
+    const result = await runner.run(
+      {
+        command: {
+          executable: process.execPath,
+          args: [
+            '-e',
+            'process.stdout.write(JSON.stringify({ allowed: process.env.NOUS_GH_ALLOWED ?? null, secret: process.env.NOUS_GH_SECRET ?? null }))',
+          ],
+        },
+        timeoutMs: 15_000,
+      },
+      {
+        environmentPolicy: {
+          mergeStrategy: 'allowlist',
+          allowlist: ['NOUS_GH_ALLOWED', 'PATH', 'PATHEXT', 'SystemRoot'],
+        },
+      },
+    );
+    expect(result.ok).toBe(true);
+    const env = JSON.parse(result.stdout) as { allowed: string | null; secret: string | null };
+    expect(env.allowed).toBe('ok');
+    expect(env.secret).toBeNull();
+  });
+
+  it('inherits the full parent environment when no policy is provided', async () => {
+    const runner = createGhProcessRunner({
+      baseEnv: { ...process.env, NOUS_GH_INHERITED: 'yes' },
+    });
+    const result = await runner.run(
+      {
+        command: {
+          executable: process.execPath,
+          args: ['-e', 'process.stdout.write(process.env.NOUS_GH_INHERITED ?? "MISSING")'],
+        },
+        timeoutMs: 15_000,
+      },
+      undefined,
+    );
+    expect(result.ok).toBe(true);
+    expect(result.stdout).toBe('yes');
+  });
+
+  it('inherits nothing from the parent env under mergeStrategy "none" (policy + invocation only)', async () => {
+    const runner = createGhProcessRunner({
+      baseEnv: { ...process.env, NOUS_GH_SECRET: 'should-not-leak' },
+    });
+    const policyEnv: Record<string, string> = { NOUS_GH_POLICY: 'from-policy' };
+    // Provide just enough for node to start without inheriting the parent env.
+    if (process.env.PATH) policyEnv.PATH = process.env.PATH;
+    if (process.env.SystemRoot) policyEnv.SystemRoot = process.env.SystemRoot;
+    const result = await runner.run(
+      {
+        command: {
+          executable: process.execPath,
+          args: [
+            '-e',
+            'process.stdout.write(JSON.stringify({ policy: process.env.NOUS_GH_POLICY ?? null, secret: process.env.NOUS_GH_SECRET ?? null }))',
+          ],
+        },
+        timeoutMs: 15_000,
+      },
+      { environmentPolicy: { mergeStrategy: 'none', env: policyEnv } },
+    );
+    expect(result.ok).toBe(true);
+    const env = JSON.parse(result.stdout) as { policy: string | null; secret: string | null };
+    expect(env.policy).toBe('from-policy');
+    expect(env.secret).toBeNull();
+  });
+
+  it('delivers the prompt via stdin (not argv)', async () => {
+    const runner = createGhProcessRunner();
+    const result = await runner.run(
+      {
+        command: {
+          executable: process.execPath,
+          args: ['-e', 'process.stdin.pipe(process.stdout)'],
+        },
+        input: 'piped-prompt-content',
+        timeoutMs: 15_000,
+      },
+      undefined,
+    );
+    expect(result.ok).toBe(true);
+    expect(result.stdout).toBe('piped-prompt-content');
+  });
+
+  it('aborts before spawn when the signal is already aborted (no process is spawned)', async () => {
+    const runner = createGhProcessRunner();
+    const result = await runner.run(
+      {
+        command: {
+          executable: process.execPath,
+          // If this ever spawned, stdout would be 'should-not-run'.
+          args: ['-e', 'process.stdout.write("should-not-run")'],
+        },
+        timeoutMs: 5_000,
+      },
+      { signal: { aborted: true } },
+    );
+    expect(result.ok).toBe(false);
+    expect(result.stdout).toBe('');
+    // This exact message is only produced by the pre-spawn abort branch, proving the
+    // child process was never spawned.
+    expect(result.failure?.message).toBe('Agent CLI invocation aborted before start.');
   });
 });

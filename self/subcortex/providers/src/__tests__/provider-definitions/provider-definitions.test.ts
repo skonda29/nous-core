@@ -27,7 +27,7 @@ const expectedDefinitions = {
   },
   'github-copilot-cli': {
     defaultEndpoint: 'http://localhost',
-    defaultModelId: 'github-copilot-cli/default',
+    defaultModelId: 'openai/gpt-4o-mini',
     envVar: undefined,
   },
   ollama: {

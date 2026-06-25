@@ -25,6 +25,7 @@ import {
   renderGhCopilotPrompt,
 } from './adapter.js';
 import {
+  GITHUB_COPILOT_CLI_DEFAULT_MODEL_ID,
   GITHUB_COPILOT_CLI_DEFAULT_TIMEOUT_MS,
   GITHUB_COPILOT_CLI_MAX_TIMEOUT_MS,
   GITHUB_COPILOT_CLI_PROVIDER_DEFINITION,
@@ -50,11 +51,18 @@ export const GITHUB_COPILOT_CLI_AGENT_ADAPTER = createAgentCliProviderAdapter({
   defaults: GITHUB_COPILOT_CLI_INVOCATION_DEFAULTS,
 });
 
-export function createGhProcessRunner(): AgentCliRunner {
+export interface GhProcessRunnerOptions {
+  /** Overrides the parent environment used as the base for the child process (testing seam). */
+  readonly baseEnv?: Readonly<Record<string, string | undefined>>;
+}
+
+export function createGhProcessRunner(
+  options: GhProcessRunnerOptions = {},
+): AgentCliRunner {
   return {
     async run(invocation: AgentCliInvocation, runnerOptions?: AgentCliRunnerOptions) {
       return normalizeAgentCliRunResult(
-        await runGhProcessRaw(invocation, runnerOptions),
+        await runGhProcessRaw(invocation, runnerOptions, options),
       );
     },
   };
@@ -63,9 +71,13 @@ export function createGhProcessRunner(): AgentCliRunner {
 function runGhProcessRaw(
   invocation: AgentCliInvocation,
   runnerOptions: AgentCliRunnerOptions | undefined,
+  options: GhProcessRunnerOptions,
 ): Promise<AgentCliRawResult> {
   const startedAt = Date.now();
 
+  // Abort is honored only before process start: the shared AgentCliAbortSignal is a
+  // snapshot ({ aborted }) with no events, so once `gh` is spawned the request runs to
+  // completion or timeout. This limitation is documented in the provider definition caveats.
   if (runnerOptions?.signal?.aborted) {
     return Promise.resolve({
       startedAt,
@@ -77,18 +89,14 @@ function runGhProcessRaw(
   return new Promise((resolve) => {
     let child;
     try {
-      const spawnEnv: NodeJS.ProcessEnv = Object.assign(
-        {},
-        process.env,
-        invocation.command.env ?? {},
-      );
+      const spawnEnv = buildProcessEnv(invocation.command.env, runnerOptions, options);
       child = spawn(
         invocation.command.executable,
         [...(invocation.command.args ?? [])],
         {
           cwd: invocation.command.cwd,
           env: spawnEnv,
-          stdio: ['ignore', 'pipe', 'pipe'],
+          stdio: ['pipe', 'pipe', 'pipe'],
           windowsHide: true,
         },
       );
@@ -131,7 +139,61 @@ function runGhProcessRaw(
       if (timeout !== undefined) clearTimeout(timeout);
       resolve({ exitCode, signal, stdout, stderr, timedOut, startedAt, endedAt: Date.now() });
     });
+
+    // Deliver the prompt through stdin so it is not exposed via argv (process listings
+    // or argv-based logs). The child may exit before the write drains (invalid model,
+    // auth failure), which would surface EPIPE/ERR_STREAM_DESTROYED on stdin; swallow
+    // those so a broken pipe never crashes the host. The real outcome is captured by
+    // the close/error handlers above.
+    if (child.stdin) {
+      child.stdin.on('error', () => { /* ignore broken pipe / write-after-end on early child exit */ });
+      try {
+        child.stdin.end(invocation.input ?? '');
+      } catch {
+        /* ignore synchronous write-after-destroy errors */
+      }
+    }
   });
+}
+
+function buildProcessEnv(
+  invocationEnv: Readonly<Record<string, string>> | undefined,
+  runnerOptions: AgentCliRunnerOptions | undefined,
+  options: GhProcessRunnerOptions,
+): NodeJS.ProcessEnv {
+  const baseEnv = options.baseEnv ?? process.env;
+  const policy = runnerOptions?.environmentPolicy;
+  const env: NodeJS.ProcessEnv = {};
+
+  if (!policy || policy.mergeStrategy === 'explicit') {
+    assignDefinedEnv(env, baseEnv);
+  } else if (policy.mergeStrategy === 'allowlist') {
+    for (const key of policy.allowlist ?? []) {
+      const value = baseEnv[key];
+      if (value !== undefined && isValidEnvKey(key)) env[key] = value;
+    }
+  }
+  // mergeStrategy === 'none' inherits nothing from the parent environment.
+
+  assignDefinedEnv(env, policy?.env);
+  assignDefinedEnv(env, invocationEnv);
+  return env;
+}
+
+function assignDefinedEnv(
+  target: NodeJS.ProcessEnv,
+  source: Readonly<Record<string, string | undefined>> | undefined,
+): void {
+  if (!source) return;
+  for (const [key, value] of Object.entries(source)) {
+    if (value !== undefined && isValidEnvKey(key)) {
+      target[key] = value;
+    }
+  }
+}
+
+function isValidEnvKey(key: string): boolean {
+  return key.length > 0 && !key.includes('=');
 }
 
 export class GitHubCopilotCliProvider implements IModelProvider {
@@ -159,7 +221,8 @@ export class GitHubCopilotCliProvider implements IModelProvider {
 
     const result = await GITHUB_COPILOT_CLI_AGENT_ADAPTER.invoke(
       {
-        args: [promptString],
+        args: [this.resolveModelId()],
+        input: promptString,
         metadata: {
           provider: 'github-copilot-cli',
           providerId: this.config.id,
@@ -188,7 +251,7 @@ export class GitHubCopilotCliProvider implements IModelProvider {
   }
 
   async *stream(request: ModelRequest): AsyncIterable<ModelStreamChunk> {
-    // gh copilot suggest does not support streaming — invoke and yield one chunk.
+    // gh models run output is captured as a single response — invoke and yield one chunk.
     const response = await this.invoke(request);
     const content = typeof response.output === 'string'
       ? response.output
@@ -209,6 +272,13 @@ export class GitHubCopilotCliProvider implements IModelProvider {
       );
     }
     return result.data;
+  }
+
+  private resolveModelId(): string {
+    const modelId = this.config.modelId?.trim();
+    return modelId !== undefined && modelId.length > 0
+      ? modelId
+      : GITHUB_COPILOT_CLI_DEFAULT_MODEL_ID;
   }
 
   private mergeRunnerOptions(request: ModelRequest): AgentCliRunnerOptions | undefined {

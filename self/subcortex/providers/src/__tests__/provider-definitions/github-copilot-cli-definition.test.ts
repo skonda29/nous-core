@@ -48,14 +48,25 @@ describe('github-copilot-cli definition', () => {
     expect(GITHUB_COPILOT_CLI_PROVIDER_DEFINITION.isLocal).toBe(true);
   });
 
-  it('has headless supported with --target shell required arg', () => {
+  it('has headless supported with no deprecated required args', () => {
     expect(GITHUB_COPILOT_CLI_PROVIDER_DEFINITION.agentCli?.headless.supported).toBe(true);
-    expect(GITHUB_COPILOT_CLI_PROVIDER_DEFINITION.agentCli?.headless.requiredArgs).toContain(
-      '--target',
-    );
-    expect(GITHUB_COPILOT_CLI_PROVIDER_DEFINITION.agentCli?.headless.requiredArgs).toContain(
-      'shell',
-    );
+    expect(GITHUB_COPILOT_CLI_PROVIDER_DEFINITION.agentCli?.headless.requiredArgs).toEqual([]);
+  });
+
+  it('targets the gh models run command surface', () => {
+    expect(GITHUB_COPILOT_CLI_PROVIDER_DEFINITION.agentCli?.command.executable).toBe('gh');
+    expect(GITHUB_COPILOT_CLI_PROVIDER_DEFINITION.agentCli?.command.defaultArgs).toEqual([
+      'models',
+      'run',
+    ]);
+  });
+
+  it('installs the gh models extension', () => {
+    expect(GITHUB_COPILOT_CLI_PROVIDER_DEFINITION.agentCli?.install?.command).toContain('gh-models');
+  });
+
+  it('defaults to a concrete GitHub Models model id', () => {
+    expect(GITHUB_COPILOT_CLI_PROVIDER_DEFINITION.defaultModelId).toBe('openai/gpt-4o-mini');
   });
 
   it('exports providerDefinition alias pointing to the same object', () => {

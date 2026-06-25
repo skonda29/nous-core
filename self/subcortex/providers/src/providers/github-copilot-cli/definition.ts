@@ -4,7 +4,7 @@ import { AGENT_CLI_PROTOCOL_ID } from '../../protocols/agent-cli/index.js';
 export const GITHUB_COPILOT_CLI_DEFAULT_TIMEOUT_MS = 60_000;
 export const GITHUB_COPILOT_CLI_MAX_TIMEOUT_MS = 300_000;
 export const GITHUB_COPILOT_CLI_DEFAULT_ENDPOINT = 'http://localhost';
-export const GITHUB_COPILOT_CLI_DEFAULT_MODEL_ID = 'github-copilot-cli/default';
+export const GITHUB_COPILOT_CLI_DEFAULT_MODEL_ID = 'openai/gpt-4o-mini';
 
 export const GITHUB_COPILOT_CLI_PROVIDER_DEFINITION = {
   vendorKey: 'github-copilot-cli',
@@ -34,12 +34,12 @@ export const GITHUB_COPILOT_CLI_PROVIDER_DEFINITION = {
   agentCli: {
     command: {
       executable: 'gh',
-      defaultArgs: ['copilot', 'suggest'],
+      defaultArgs: ['models', 'run'],
     },
 
     install: {
-      command: 'gh extension install github/gh-copilot',
-      notes: 'Requires GitHub CLI (gh) to be installed first: https://cli.github.com',
+      command: 'gh extension install https://github.com/github/gh-models',
+      notes: 'Requires GitHub CLI (gh) installed and authenticated (`gh auth login`) first: https://cli.github.com. Installs the GitHub Models extension.',
     },
 
     auth: {
@@ -49,7 +49,7 @@ export const GITHUB_COPILOT_CLI_PROVIDER_DEFINITION = {
 
     headless: {
       supported: true,
-      requiredArgs: ['--target', 'shell'],
+      requiredArgs: [],
       nonInteractiveEnv: { NO_COLOR: '1' },
     },
 
@@ -63,8 +63,17 @@ export const GITHUB_COPILOT_CLI_PROVIDER_DEFINITION = {
       maxMs: GITHUB_COPILOT_CLI_MAX_TIMEOUT_MS,
     },
 
+    failureBehavior: {
+      timeoutKind: 'timeout',
+      nonZeroExitKind: 'non_zero_exit',
+      spawnErrorKind: 'spawn_error',
+    },
+
     caveats: [
       'Declared session_bound_command — cannot be assigned to Cortex Chat or Cortex System roles',
+      'Targets `gh models run <model>` (GitHub Models extension); the legacy `gh copilot suggest --target shell` surface was deprecated 2025-09-25 and stopped producing output 2025-10-25',
+      'Prompt content is delivered via stdin (not argv) so it is not exposed through process listings or argv-based logging',
+      'Abort is honored only before process start; once `gh` is spawned the request runs to completion or timeout',
     ],
 
     targetIssueRefs: ['#280'],
