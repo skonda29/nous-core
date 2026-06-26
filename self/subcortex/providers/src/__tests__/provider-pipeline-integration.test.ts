@@ -434,8 +434,8 @@ describe('github-copilot-cli — process runner', () => {
   });
 
   it('force-resolves a timed-out run even when the child ignores SIGTERM (never hangs the lane)', async () => {
-    // A child that traps SIGTERM would hang a SIGTERM-only timeout; the runner must
-    // escalate to SIGKILL and resolve as a timeout.
+    // The child ignores SIGTERM, so a SIGTERM-only timeout would hang forever.
+    // The runner must escalate to SIGKILL and resolve the run as a timeout.
     const runner = createGhProcessRunner({ sigtermGraceMs: 200 });
     const result = await runner.run(
       {
