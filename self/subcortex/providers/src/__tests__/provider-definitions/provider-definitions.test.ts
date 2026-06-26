@@ -25,23 +25,28 @@ const expectedDefinitions = {
     defaultModelId: 'codex-cli/default',
     envVar: undefined,
   },
-  'github-copilot-cli': {
-    defaultEndpoint: 'http://localhost',
-    defaultModelId: 'openai/gpt-4o-mini',
-    envVar: undefined,
-  },
   ollama: {
     defaultEndpoint: 'http://localhost:11434',
     defaultModelId: 'llama3.2',
     envVar: undefined,
   },
+    'github-copilot-cli': {
+    defaultEndpoint: 'http://localhost',
+    defaultModelId: 'openai/gpt-4o-mini',
+    envVar: undefined,
+  },
+  'huggingface-tgi': {
+    defaultEndpoint: 'http://localhost:8080',
+    defaultModelId: 'gpt-5.4',
+    envVar: 'HUGGINGFACE_API_KEY',
+  }
   groq: {
     defaultEndpoint: 'https://api.groq.com/openai',
     defaultModelId: 'llama-3.3-70b-versatile',
     envVar: 'GROQ_API_KEY',
   },
-  'llama-cpp': {
-    defaultEndpoint: 'http://localhost:8080',
+  ollama: {
+    defaultEndpoint: 'http://localhost:11434',
     defaultModelId: 'llama3.2',
     envVar: undefined,
   },
