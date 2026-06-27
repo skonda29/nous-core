@@ -47,6 +47,7 @@ afterEach(() => {
   delete process.env.ANTHROPIC_API_KEY;
   delete process.env.OPENAI_API_KEY;
   delete process.env.MOONSHOT_API_KEY;
+  delete process.env.GROQ_API_KEY;
 });
 
 describe('provider definition to adapter to registry pipeline', () => {
@@ -54,6 +55,8 @@ describe('provider definition to adapter to registry pipeline', () => {
     expect(PROVIDER_DEFINITIONS.map((definition) => definition.vendorKey)).toEqual([
       'anthropic',
       'codex-cli',
+      'groq',
+      'llama-cpp',
       'moonshot',
       'ollama',
       'openai',
@@ -159,13 +162,16 @@ describe('provider definition to adapter to registry pipeline', () => {
     process.env.ANTHROPIC_API_KEY = 'test-anthropic-key';
     process.env.OPENAI_API_KEY = 'test-openai-key';
     process.env.MOONSHOT_API_KEY = 'test-moonshot-key';
+    process.env.GROQ_API_KEY = 'test-groq-key';
 
     const registry = new ProviderRegistry(createEmptyConfig());
     const expectedClassByVendor = {
       anthropic: AnthropicProvider,
       'codex-cli': CodexCliProvider,
       moonshot: ChatCompletionsProvider,
+      'llama-cpp': ChatCompletionsProvider,
       openai: ChatCompletionsProvider,
+      groq: ChatCompletionsProvider,
       ollama: OllamaProvider,
     };
 

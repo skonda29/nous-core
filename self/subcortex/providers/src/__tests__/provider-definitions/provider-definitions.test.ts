@@ -35,6 +35,16 @@ const expectedDefinitions = {
     defaultModelId: 'llama3.2',
     envVar: undefined,
   },
+  groq: {
+    defaultEndpoint: 'https://api.groq.com/openai',
+    defaultModelId: 'llama-3.3-70b-versatile',
+    envVar: 'GROQ_API_KEY',
+  },
+  'llama-cpp': {
+    defaultEndpoint: 'http://localhost:8080',
+    defaultModelId: 'llama3.2',
+    envVar: undefined,
+  },
 } as const;
 
 describe('provider definitions catalog', () => {
@@ -42,6 +52,8 @@ describe('provider definitions catalog', () => {
     expect(PROVIDER_DEFINITIONS.map((definition) => definition.vendorKey).sort()).toEqual([
       'anthropic',
       'codex-cli',
+      'groq',
+      'llama-cpp',
       'moonshot',
       'ollama',
       'openai',
@@ -82,6 +94,7 @@ describe('provider definitions catalog', () => {
       join('providers', 'codex-cli', 'definition.ts'),
       join('protocols', 'openai-api', 'provider.ts'),
       join('providers', 'ollama', 'implementation.ts'),
+      join('providers', 'llama-cpp', 'definition.ts'),
     ];
     const forbidden = [
       /fetch/,
