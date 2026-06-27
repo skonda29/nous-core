@@ -49,12 +49,14 @@ function makeThrowingProvider() {
 
 describe('adapter resolver', () => {
   it('aggregates all canonical adapter modules', () => {
-    // `chat-completions` appears twice: both the openai and groq leaves reuse the
-    // shared chat-completions adapter. The resolver keys modules by adapterKey, so
-    // the duplicate collapses to a single resolvable module.
+    // `chat-completions` appears three times: the openai, groq, and llama-cpp leaves
+    // reuse the shared chat-completions adapter. The resolver keys modules by
+    // adapterKey, so the duplicates collapse to a single resolvable module.
     expect(ADAPTER_MODULES.map((module) => module.adapterKey)).toEqual([
       'anthropic',
       'codex-cli',
+      'github-copilot-cli',
+      'chat-completions',
       'chat-completions',
       'ollama',
       'chat-completions',
@@ -66,6 +68,7 @@ describe('adapter resolver', () => {
     expect(resolveAdapter('anthropic').capabilities.cacheControl).toBe(true);
     expect(resolveAdapter('chat-completions').capabilities.nativeToolUse).toBe(true);
     expect(resolveAdapter('codex-cli').capabilities.streaming).toBe(true);
+    expect(resolveAdapter('github-copilot-cli').capabilities.nativeToolUse).toBe(false);
     expect(resolveAdapter('ollama').capabilities.extendedThinking).toBe(true);
     expect(resolveAdapter('text').capabilities.nativeToolUse).toBe(false);
   });
