@@ -45,6 +45,11 @@ const expectedDefinitions = {
     defaultModelId: 'llama3.2',
     envVar: undefined,
   },
+  perplexity: {
+    defaultEndpoint: 'https://api.perplexity.ai',
+    defaultModelId: 'sonar',
+    envVar: 'PERPLEXITY_API_KEY',
+  },
 } as const;
 
 describe('provider definitions catalog', () => {
@@ -57,6 +62,7 @@ describe('provider definitions catalog', () => {
       'llama-cpp',
       'ollama',
       'openai',
+      'perplexity',
     ]);
   });
 
@@ -95,6 +101,7 @@ describe('provider definitions catalog', () => {
       join('protocols', 'openai-api', 'provider.ts'),
       join('providers', 'ollama', 'implementation.ts'),
       join('providers', 'llama-cpp', 'definition.ts'),
+      join('providers', 'perplexity', 'definition.ts'),
     ];
     const forbidden = [
       /fetch/,
