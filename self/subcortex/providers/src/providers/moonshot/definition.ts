@@ -15,6 +15,10 @@ export const MOONSHOT_PROVIDER_DEFINITION = {
   auth: {
     envVar: 'MOONSHOT_API_KEY',
     vaultKeyNamespace: 'moonshot',
+    header: {
+      name: 'Authorization',
+      scheme: 'bearer',
+    },
     required: true,
     purpose: 'api_key',
   },

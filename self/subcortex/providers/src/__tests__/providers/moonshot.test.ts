@@ -53,6 +53,10 @@ describe('moonshot provider leaf — definition', () => {
     expect(MOONSHOT_PROVIDER_DEFINITION.auth).toEqual({
       envVar: 'MOONSHOT_API_KEY',
       vaultKeyNamespace: 'moonshot',
+      header: {
+        name: 'Authorization',
+        scheme: 'bearer',
+      },
       required: true,
       purpose: 'api_key',
     });
@@ -137,5 +141,33 @@ describe('moonshot provider leaf — factory', () => {
     const provider = providerFactory.create(moonshotConfig(), { apiKey: 'moonshot-key' });
     expect(provider).toBeInstanceOf(ChatCompletionsProvider);
     expect(provider.getConfig().vendor).toBe('moonshot');
+  });
+
+  it('fails closed instead of falling back to OPENAI_API_KEY when no Moonshot key is present', () => {
+    const previousMoonshot = process.env.MOONSHOT_API_KEY;
+    const previousOpenai = process.env.OPENAI_API_KEY;
+    delete process.env.MOONSHOT_API_KEY;
+    process.env.OPENAI_API_KEY = 'openai-key-should-not-be-used';
+    try {
+      expect(() => providerFactory.create(moonshotConfig(), {})).toThrow(/MOONSHOT_API_KEY/);
+      expect(() => providerFactory.create(moonshotConfig())).toThrow(/MOONSHOT_API_KEY/);
+    } finally {
+      if (previousMoonshot === undefined) delete process.env.MOONSHOT_API_KEY;
+      else process.env.MOONSHOT_API_KEY = previousMoonshot;
+      if (previousOpenai === undefined) delete process.env.OPENAI_API_KEY;
+      else process.env.OPENAI_API_KEY = previousOpenai;
+    }
+  });
+
+  it('resolves the credential from MOONSHOT_API_KEY when no apiKey option is supplied', () => {
+    const previousMoonshot = process.env.MOONSHOT_API_KEY;
+    process.env.MOONSHOT_API_KEY = 'moonshot-env-key';
+    try {
+      const provider = providerFactory.create(moonshotConfig());
+      expect(provider).toBeInstanceOf(ChatCompletionsProvider);
+    } finally {
+      if (previousMoonshot === undefined) delete process.env.MOONSHOT_API_KEY;
+      else process.env.MOONSHOT_API_KEY = previousMoonshot;
+    }
   });
 });
