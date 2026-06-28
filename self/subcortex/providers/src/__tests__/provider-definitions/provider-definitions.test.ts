@@ -30,6 +30,11 @@ const expectedDefinitions = {
     defaultModelId: 'codex-cli/default',
     envVar: undefined,
   },
+  'github-copilot-cli': {
+    defaultEndpoint: 'http://localhost',
+    defaultModelId: 'openai/gpt-4o-mini',
+    envVar: undefined,
+  },
   ollama: {
     defaultEndpoint: 'http://localhost:11434',
     defaultModelId: 'llama3.2',
@@ -52,6 +57,7 @@ describe('provider definitions catalog', () => {
     expect(PROVIDER_DEFINITIONS.map((definition) => definition.vendorKey).sort()).toEqual([
       'anthropic',
       'codex-cli',
+      'github-copilot-cli',
       'groq',
       'llama-cpp',
       'moonshot',
