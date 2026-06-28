@@ -43,6 +43,7 @@ const expectedDefinitions = {
   'llama-cpp': {
     defaultEndpoint: 'http://localhost:8080',
     defaultModelId: 'llama3.2',
+    envVar: undefined,
   },
   'qwen-code': {
     defaultEndpoint: 'http://localhost',
