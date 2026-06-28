@@ -45,6 +45,11 @@ const expectedDefinitions = {
     defaultModelId: 'llama3.2',
     envVar: undefined,
   },
+  vllm: {
+    defaultEndpoint: 'http://localhost:8000',
+    defaultModelId: 'meta-llama/Llama-3.1-8B-Instruct',
+    envVar: 'VLLM_API_KEY',
+  },
 } as const;
 
 describe('provider definitions catalog', () => {
@@ -57,6 +62,7 @@ describe('provider definitions catalog', () => {
       'llama-cpp',
       'ollama',
       'openai',
+      'vllm',
     ]);
   });
 
@@ -95,6 +101,7 @@ describe('provider definitions catalog', () => {
       join('protocols', 'openai-api', 'provider.ts'),
       join('providers', 'ollama', 'implementation.ts'),
       join('providers', 'llama-cpp', 'definition.ts'),
+      join('providers', 'vllm', 'definition.ts'),
     ];
     const forbidden = [
       /fetch/,

@@ -64,6 +64,7 @@ describe('provider definition to adapter to registry pipeline', () => {
       'llama-cpp',
       'ollama',
       'openai',
+      'vllm',
     ]);
     expect(resolveProviderDefinition('anthropic').defaultModelId).toBe(
       'claude-sonnet-4-20250514',
@@ -175,6 +176,7 @@ describe('provider definition to adapter to registry pipeline', () => {
       openai: ChatCompletionsProvider,
       groq: ChatCompletionsProvider,
       ollama: OllamaProvider,
+      vllm: ChatCompletionsProvider,
     };
 
     for (const definition of PROVIDER_DEFINITIONS) {
