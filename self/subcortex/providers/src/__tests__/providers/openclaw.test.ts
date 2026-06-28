@@ -15,11 +15,14 @@ import {
   OPENCLAW_PROVIDER_DEFINITION,
   OpenClawProvider,
   createOpenClawAdapter,
+  createOpenClawProcessRunner,
+  planOpenClawSpawn,
   providerAdapter,
   providerDefinition,
   providerFactory,
   renderOpenClawPrompt,
   selectOpenClawExecutable,
+  type OpenClawRunnerOptions,
 } from '../../providers/openclaw/index.js';
 import { createFakeAgentCliRunner } from '../../protocols/agent-cli/index.js';
 import { AgentCliProviderMetadataSchema } from '../../schemas/provider-definition.js';
@@ -271,3 +274,130 @@ describe('OpenClaw provider leaf', () => {
     expect(OPENCLAW_AGENT_ADAPTER.metadata.protocolId).toBe('agent-cli');
   });
 });
+
+describe('planOpenClawSpawn (shell-safe argv)', () => {
+  it('spawns the executable directly with literal argv on POSIX', () => {
+    const plan = planOpenClawSpawn('openclaw', ['run', '--model', 'pro && rm -rf /'], {
+      platform: 'linux',
+    });
+
+    expect(plan).toEqual({
+      command: 'openclaw',
+      args: ['run', '--model', 'pro && rm -rf /'],
+      windowsVerbatimArguments: false,
+    });
+  });
+
+  it('prefers a native .exe over a .cmd shim on Windows and keeps literal argv', () => {
+    const plan = planOpenClawSpawn('openclaw', ['--model', 'pro'], {
+      platform: 'win32',
+      commandResolver: () => 'C:\\bin\\openclaw.cmd\r\nC:\\bin\\openclaw.exe\r\n',
+    });
+
+    expect(plan).toEqual({
+      command: 'C:\\bin\\openclaw.exe',
+      args: ['--model', 'pro'],
+      windowsVerbatimArguments: false,
+    });
+  });
+
+  it('routes a .cmd shim through cmd.exe with every argument escaped', () => {
+    const plan = planOpenClawSpawn('openclaw', ['--model', 'pro && echo INJECTED'], {
+      platform: 'win32',
+      comspec: 'cmd.exe',
+      commandResolver: () => 'C:\\bin\\openclaw.cmd\r\n',
+    });
+
+    expect(plan.command).toBe('cmd.exe');
+    expect(plan.windowsVerbatimArguments).toBe(true);
+    expect(plan.args.slice(0, 3)).toEqual(['/d', '/s', '/c']);
+    // The model id reaches cmd.exe with its metacharacters caret-escaped, never
+    // interpreted as a command separator.
+    const modelArg = plan.args.at(-1) ?? '';
+    expect(modelArg).toContain('^&^&');
+    expect(modelArg).not.toMatch(/(^|[^^])&&/);
+  });
+
+  it('uses an explicit executable path verbatim without PATH resolution', () => {
+    const plan = planOpenClawSpawn('/custom/openclaw.cmd', ['--model', 'pro'], {
+      platform: 'win32',
+      comspec: 'cmd.exe',
+      commandResolver: () => {
+        throw new Error('resolver should not be called for explicit paths');
+      },
+    });
+
+    expect(plan.args[3]).toBe(escapeForAssertion('/custom/openclaw.cmd'));
+  });
+});
+
+describe('OpenClaw live process runner', () => {
+  it('passes user-controlled args as literal argv without shell interpretation', async () => {
+    const runner = createOpenClawProcessRunner();
+    const malicious = 'pro && echo INJECTED';
+
+    const result = await runner.run({
+      command: {
+        executable: process.execPath,
+        // `--` ends node's own option parsing; everything after is script argv.
+        args: ['-e', 'process.stdout.write(JSON.stringify(process.argv.slice(1)))', '--', '--model', malicious],
+      },
+      timeoutMs: 15_000,
+    });
+
+    expect(result.ok).toBe(true);
+    const argv = JSON.parse(result.stdout) as string[];
+    // The dangerous value survives as a single literal argv token; the `&&` is
+    // never executed (no standalone "INJECTED" was produced by a shell).
+    expect(argv).toEqual(['--model', malicious]);
+  });
+
+  it('kills the child process when the abort signal fires after spawn', async () => {
+    const runner = createOpenClawProcessRunner();
+    const controller = new AbortController();
+    const options: OpenClawRunnerOptions = { abortSignal: controller.signal };
+
+    const started = Date.now();
+    const pending = runner.run(
+      {
+        command: {
+          executable: process.execPath,
+          // Sleep far longer than the test would tolerate if abort did nothing.
+          args: ['-e', 'setInterval(() => {}, 1000)'],
+        },
+        timeoutMs: 30_000,
+      },
+      options,
+    );
+
+    setTimeout(() => controller.abort(), 100);
+    const result = await pending;
+
+    expect(result.ok).toBe(false);
+    // Resolved promptly because the child was terminated, not run to timeout.
+    expect(Date.now() - started).toBeLessThan(10_000);
+  });
+
+  it('reports a pre-start abort without spawning a process', async () => {
+    const runner = createOpenClawProcessRunner();
+    const controller = new AbortController();
+    controller.abort();
+    const options: OpenClawRunnerOptions = { abortSignal: controller.signal };
+
+    const result = await runner.run(
+      {
+        command: { executable: process.execPath, args: ['-e', 'process.exit(0)'] },
+        timeoutMs: 5_000,
+      },
+      options,
+    );
+
+    expect(result.ok).toBe(false);
+  });
+});
+
+// Mirrors the cmd.exe escaping in planOpenClawSpawn for assertion purposes.
+function escapeForAssertion(arg: string): string {
+  const quoted = `"${arg.replace(/"/g, '""')}"`;
+  return quoted.replace(/[()%!^"<>&|]/g, '^$&');
+}

@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { NousError, ValidationError } from '@nous/shared';
 import type {
   IModelProvider,
@@ -37,9 +37,41 @@ export interface OpenClawProviderOptions {
   readonly executable?: string;
 }
 
+/**
+ * Resolves a bare command name to one or more absolute candidates (one per
+ * line, `where.exe`/`which` style). Injected in tests so executable resolution
+ * never shells out to the host.
+ */
+export type OpenClawCommandResolver = (
+  command: string,
+  args: readonly string[],
+  options: { readonly env?: NodeJS.ProcessEnv },
+) => string;
+
 export interface OpenClawProcessRunnerOptions {
   readonly baseEnv?: Readonly<Record<string, string | undefined>>;
   readonly platform?: NodeJS.Platform;
+  readonly commandResolver?: OpenClawCommandResolver;
+  /** Override for `cmd.exe` (defaults to `%ComSpec%`); used only for `.cmd`/`.bat` shims. */
+  readonly comspec?: string;
+}
+
+/**
+ * OpenClaw's runner options extend the shared agent-cli options with a *live*
+ * `AbortSignal`. The shared {@link AgentCliRunnerOptions.signal} is only a
+ * pre-start snapshot (`{ aborted }`); the live signal lets the process runner
+ * kill the child after it has spawned. The agent-cli adapter forwards runner
+ * options verbatim, so the extra field reaches {@link createOpenClawProcessRunner}.
+ */
+export type OpenClawRunnerOptions = AgentCliRunnerOptions & {
+  readonly abortSignal?: AbortSignal;
+};
+
+/** Literal-argv spawn plan — never a shell command string. */
+export interface OpenClawSpawnPlan {
+  readonly command: string;
+  readonly args: readonly string[];
+  readonly windowsVerbatimArguments: boolean;
 }
 
 export const OPENCLAW_INVOCATION_DEFAULTS: AgentCliInvocationDefaults = {
@@ -213,18 +245,22 @@ export class OpenClawProvider implements IModelProvider {
     return ['--model', this.config.modelId];
   }
 
-  private mergeRunnerOptions(request: ModelRequest): AgentCliRunnerOptions | undefined {
-    const signal = request.abortSignal
-      ? { aborted: request.abortSignal.aborted }
+  private mergeRunnerOptions(request: ModelRequest): OpenClawRunnerOptions | undefined {
+    const abortSignal = request.abortSignal;
+    // Keep the pre-start snapshot for the shared contract, but also forward the
+    // live signal so the runner can kill the child after spawn (post-start abort).
+    const signal = abortSignal
+      ? { aborted: abortSignal.aborted }
       : this.runnerOptions?.signal;
 
-    if (!signal && !this.runnerOptions) {
+    if (!signal && !abortSignal && !this.runnerOptions) {
       return undefined;
     }
 
     return {
       ...this.runnerOptions,
       ...(signal ? { signal } : {}),
+      ...(abortSignal ? { abortSignal } : {}),
     };
   }
 }
@@ -291,12 +327,13 @@ export function createOpenClawProcessRunner(
 
 function runOpenClawProcessRaw(
   invocation: AgentCliInvocation,
-  runnerOptions: AgentCliRunnerOptions | undefined,
+  runnerOptions: OpenClawRunnerOptions | undefined,
   options: OpenClawProcessRunnerOptions,
   onTranscriptEvent?: (event: AgentCliStreamEvent) => void,
 ): Promise<AgentCliRawResult> {
   const startedAt = Date.now();
-  if (runnerOptions?.signal?.aborted) {
+  const abortSignal = runnerOptions?.abortSignal;
+  if (runnerOptions?.signal?.aborted || abortSignal?.aborted) {
     return Promise.resolve({
       startedAt,
       endedAt: Date.now(),
@@ -304,18 +341,25 @@ function runOpenClawProcessRaw(
     });
   }
 
-  const platform = options.platform ?? process.platform;
-
   return new Promise((resolve) => {
     let child;
     try {
       const env = buildProcessEnv(invocation.command.env, runnerOptions, options);
-      child = spawn(invocation.command.executable, [...(invocation.command.args ?? [])], {
+      // Never run user-controlled args (model id, prompt-derived values) through
+      // a shell: resolve the executable and pass args as a literal argv array so
+      // shell metacharacters can never be interpreted (Windows command injection).
+      const plan = planOpenClawSpawn(
+        invocation.command.executable,
+        invocation.command.args ?? [],
+        { platform: options.platform, commandResolver: options.commandResolver, env, comspec: options.comspec },
+      );
+      child = spawn(plan.command, [...plan.args], {
         cwd: invocation.command.cwd,
         env,
         stdio: ['pipe', 'pipe', 'pipe'],
         windowsHide: true,
-        shell: platform === 'win32',
+        shell: false,
+        windowsVerbatimArguments: plan.windowsVerbatimArguments,
       });
     } catch (error) {
       resolve({ error, startedAt, endedAt: Date.now() });
@@ -325,6 +369,7 @@ function runOpenClawProcessRaw(
     let stdout = '';
     let stderr = '';
     let timedOut = false;
+    let aborted = false;
     let settled = false;
     const timeout = invocation.timeoutMs === undefined
       ? undefined
@@ -332,6 +377,19 @@ function runOpenClawProcessRaw(
         timedOut = true;
         child.kill('SIGTERM');
       }, invocation.timeoutMs);
+
+    // Live abort: once the process is running, terminate it if the caller cancels.
+    const onAbort = (): void => {
+      aborted = true;
+      child.kill('SIGTERM');
+    };
+    if (abortSignal) {
+      abortSignal.addEventListener('abort', onAbort, { once: true });
+    }
+    const cleanup = (): void => {
+      if (timeout) clearTimeout(timeout);
+      abortSignal?.removeEventListener('abort', onAbort);
+    };
 
     child.stdout.setEncoding('utf8');
     child.stderr.setEncoding('utf8');
@@ -346,18 +404,119 @@ function runOpenClawProcessRaw(
     child.on('error', (error) => {
       if (settled) return;
       settled = true;
-      if (timeout) clearTimeout(timeout);
+      cleanup();
       resolve({ stdout, stderr, error, timedOut, startedAt, endedAt: Date.now() });
     });
     child.on('close', (exitCode, signal) => {
       if (settled) return;
       settled = true;
-      if (timeout) clearTimeout(timeout);
+      cleanup();
+      if (aborted) {
+        resolve({
+          stdout,
+          stderr,
+          signal,
+          error: new Error('Agent CLI invocation aborted.'),
+          startedAt,
+          endedAt: Date.now(),
+        });
+        return;
+      }
       resolve({ exitCode, signal, stdout, stderr, timedOut, startedAt, endedAt: Date.now() });
     });
 
     child.stdin.end(invocation.input ?? '');
   });
+}
+
+/**
+ * Builds a literal-argv spawn plan. The returned `command`/`args` are always
+ * passed to `spawn` with `shell: false`, so user-controlled values can never be
+ * interpreted by a shell.
+ *
+ * - POSIX / native Windows executables: spawn the resolved path directly with
+ *   the args as a literal argv array.
+ * - Windows `.cmd`/`.bat` shims: Node refuses to spawn these without a shell, so
+ *   they are routed through `cmd.exe /d /s /c` with every argument explicitly
+ *   escaped (`windowsVerbatimArguments: true`), keeping shell metacharacters
+ *   inert rather than relying on `shell: true` to join the whole command line.
+ */
+export function planOpenClawSpawn(
+  executable: string,
+  args: readonly string[],
+  options: {
+    readonly platform?: NodeJS.Platform;
+    readonly commandResolver?: OpenClawCommandResolver;
+    readonly env?: NodeJS.ProcessEnv;
+    readonly comspec?: string;
+  } = {},
+): OpenClawSpawnPlan {
+  const platform = options.platform ?? process.platform;
+  if (platform !== 'win32') {
+    return { command: executable, args: [...args], windowsVerbatimArguments: false };
+  }
+
+  const resolved = resolveWindowsExecutable(executable, options);
+  if (/\.(cmd|bat)$/i.test(resolved)) {
+    const comspec = options.comspec ?? process.env.ComSpec ?? 'cmd.exe';
+    return {
+      command: comspec,
+      args: ['/d', '/s', '/c', escapeCmdArg(resolved), ...args.map(escapeCmdArg)],
+      windowsVerbatimArguments: true,
+    };
+  }
+
+  return { command: resolved, args: [...args], windowsVerbatimArguments: false };
+}
+
+/**
+ * Resolves a bare `openclaw` command name to a concrete Windows path via
+ * `where.exe`, preferring a native `.exe`/`.com` over a `.cmd`/`.bat` shim so we
+ * can spawn directly without a shell whenever possible. An explicit path (one
+ * that differs from the default executable) is used verbatim.
+ */
+function resolveWindowsExecutable(
+  executable: string,
+  options: {
+    readonly commandResolver?: OpenClawCommandResolver;
+    readonly env?: NodeJS.ProcessEnv;
+  },
+): string {
+  if (executable !== OPENCLAW_PROVIDER_DEFINITION.agentCli.command.executable) {
+    return executable;
+  }
+
+  const resolver = options.commandResolver ?? defaultCommandResolver;
+  let candidates: readonly string[];
+  try {
+    candidates = resolver('where.exe', [executable], { env: options.env })
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+  } catch {
+    candidates = [];
+  }
+
+  const nativeExecutable = candidates.find((candidate) => /\.(exe|com)$/i.test(candidate));
+  return nativeExecutable ?? candidates[0] ?? executable;
+}
+
+function defaultCommandResolver(
+  command: string,
+  args: readonly string[],
+  options: { readonly env?: NodeJS.ProcessEnv },
+): string {
+  return execFileSync(command, [...args], { encoding: 'utf8', env: options.env });
+}
+
+/**
+ * Escapes a single argument for `cmd.exe`: wraps it in double quotes (doubling
+ * embedded quotes) and caret-escapes the metacharacters cmd would otherwise
+ * interpret. Used only on the `.cmd`/`.bat` shim path.
+ */
+function escapeCmdArg(arg: string): string {
+  const quoted = `"${arg.replace(/"/g, '""')}"`;
+  return quoted.replace(/[()%!^"<>&|]/g, '^$&');
 }
 
 function buildProcessEnv(

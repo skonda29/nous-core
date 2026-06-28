@@ -18,10 +18,14 @@ export {
   OpenClawProvider,
   createOpenClawInvocationDefaults,
   createOpenClawProcessRunner,
+  planOpenClawSpawn,
   selectOpenClawExecutable,
 } from './implementation.js';
 export type {
+  OpenClawCommandResolver,
   OpenClawProcessRunnerOptions,
   OpenClawProviderOptions,
+  OpenClawRunnerOptions,
+  OpenClawSpawnPlan,
 } from './implementation.js';
 export { providerFactory } from './provider.js';
