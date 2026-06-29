@@ -12,9 +12,13 @@ export const DEEPINFRA_PROVIDER_DEFINITION = {
   auth: {
     envVar: 'DEEPINFRA_API_KEY',
     vaultKeyNamespace: 'deepinfra',
+    header: {
+        name: 'Authorization',
+        scheme: 'bearer',
+    },
     required: true,
     purpose: 'api_key',
-  },
+},
   modelListEndpoint: '/models',
   capabilities: {
     streaming: true,
