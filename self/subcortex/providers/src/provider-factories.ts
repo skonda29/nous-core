@@ -5,6 +5,7 @@ import { providerFactory as codexCliProviderFactory } from './providers/codex-cl
 import { providerFactory as githubCopilotCliProviderFactory } from './providers/github-copilot-cli/provider.js';
 import { providerFactory as groqProviderFactory } from './providers/groq/provider.js';
 import { providerFactory as llamaCppProviderFactory } from './providers/llama-cpp/provider.js';
+import { providerFactory as mistralProviderFactory } from './providers/mistral/provider.js';
 import { providerFactory as ollamaProviderFactory } from './providers/ollama/provider.js';
 import { providerFactory as openaiProviderFactory } from './providers/openai/provider.js';
 
@@ -16,6 +17,7 @@ export const CERTIFIED_PROVIDER_FACTORIES = [
   githubCopilotCliProviderFactory,
   groqProviderFactory,
   llamaCppProviderFactory,
+  mistralProviderFactory,
   ollamaProviderFactory,
   openaiProviderFactory,
 ] as const satisfies readonly ProviderFactoryModule[];

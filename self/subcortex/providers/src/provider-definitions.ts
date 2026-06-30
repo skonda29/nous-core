@@ -6,6 +6,7 @@ import { providerDefinition as codexCliProviderDefinition } from './providers/co
 import { providerDefinition as githubCopilotCliProviderDefinition } from './providers/github-copilot-cli/definition.js';
 import { providerDefinition as groqProviderDefinition } from './providers/groq/definition.js';
 import { providerDefinition as llamaCppProviderDefinition } from './providers/llama-cpp/definition.js';
+import { providerDefinition as mistralProviderDefinition } from './providers/mistral/definition.js';
 import { providerDefinition as ollamaProviderDefinition } from './providers/ollama/definition.js';
 import { providerDefinition as openaiProviderDefinition } from './providers/openai/definition.js';
 
@@ -17,6 +18,7 @@ const PROVIDER_DEFINITION_LEAVES = [
   githubCopilotCliProviderDefinition,
   groqProviderDefinition,
   llamaCppProviderDefinition,
+  mistralProviderDefinition,
   ollamaProviderDefinition,
   openaiProviderDefinition,
 ] as const satisfies readonly ProviderDefinitionLeaf[];
