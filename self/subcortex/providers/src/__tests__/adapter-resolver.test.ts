@@ -49,13 +49,14 @@ function makeThrowingProvider() {
 
 describe('adapter resolver', () => {
   it('aggregates all canonical adapter modules', () => {
-    // `chat-completions` appears three times: the openai, groq, and llama-cpp leaves
-    // reuse the shared chat-completions adapter. The resolver keys modules by
-    // adapterKey, so the duplicates collapse to a single resolvable module.
+    // `chat-completions` appears multiple times: the groq, llama-cpp, moonshot, and
+    // openai leaves all reuse the shared chat-completions adapter. The resolver keys
+    // modules by adapterKey, so the duplicates collapse to a single resolvable module.
     expect(ADAPTER_MODULES.map((module) => module.adapterKey)).toEqual([
       'anthropic',
       'codex-cli',
       'github-copilot-cli',
+      'chat-completions',
       'chat-completions',
       'chat-completions',
       'ollama',
@@ -97,6 +98,7 @@ describe('adapter resolver', () => {
     expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'anthropic' }))).toBe('anthropic');
     expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'codex-cli' }))).toBe('codex-cli');
     expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'ollama' }))).toBe('ollama');
+    expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'moonshot' }))).toBe('chat-completions');
   });
 
   it('falls back to name heuristic for non-catalog provider configs', () => {

@@ -20,6 +20,11 @@ const expectedDefinitions = {
     defaultModelId: 'gpt-4o',
     envVar: 'OPENAI_API_KEY',
   },
+  moonshot: {
+    defaultEndpoint: 'https://api.moonshot.ai',
+    defaultModelId: 'kimi-k2.6',
+    envVar: 'MOONSHOT_API_KEY',
+  },
   'codex-cli': {
     defaultEndpoint: 'http://localhost',
     defaultModelId: 'codex-cli/default',
@@ -55,6 +60,7 @@ describe('provider definitions catalog', () => {
       'github-copilot-cli',
       'groq',
       'llama-cpp',
+      'moonshot',
       'ollama',
       'openai',
     ]);
