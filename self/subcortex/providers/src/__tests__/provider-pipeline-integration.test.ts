@@ -56,6 +56,7 @@ afterEach(() => {
   delete process.env.DEEPINFRA_API_KEY;
   delete process.env.MOONSHOT_API_KEY;
   delete process.env.GROQ_API_KEY;
+  delete process.env.HUGGINGFACE_API_KEY;
   delete process.env.OPENROUTER_API_KEY;
   delete process.env.PERPLEXITY_API_KEY;
 });
@@ -68,6 +69,7 @@ describe('provider definition to adapter to registry pipeline', () => {
       'deepinfra',
       'github-copilot-cli',
       'groq',
+      'huggingface-tgi',
       'llama-cpp',
       'moonshot',
       'ollama',
@@ -82,6 +84,7 @@ describe('provider definition to adapter to registry pipeline', () => {
     expect(resolveProviderDefinition('openai').adapterKey).toBe('chat-completions');
     expect(resolveProviderDefinition('moonshot').adapterKey).toBe('chat-completions');
     expect(resolveProviderDefinition('ollama').auth.required).toBe(false);
+    expect(resolveProviderDefinition('huggingface-tgi').adapterKey).toBe('chat-completions');
   });
 
   it('makes a leaf provider definition discoverable through typed aggregation', () => {
@@ -182,6 +185,7 @@ describe('provider definition to adapter to registry pipeline', () => {
     process.env.ANTHROPIC_API_KEY = 'test-anthropic-key';
     process.env.OPENAI_API_KEY = 'test-openai-key';
     process.env.DEEPINFRA_API_KEY = 'test-deepinfra-key';
+    process.env.HUGGINGFACE_API_KEY = 'test-huggingface-key';
     process.env.MOONSHOT_API_KEY = 'test-moonshot-key';
     process.env.GROQ_API_KEY = 'test-groq-key';
     process.env.OPENROUTER_API_KEY = 'test-openrouter-key';
@@ -198,6 +202,7 @@ describe('provider definition to adapter to registry pipeline', () => {
       openai: ChatCompletionsProvider,
       groq: ChatCompletionsProvider,
       ollama: OllamaProvider,
+      'huggingface-tgi': ChatCompletionsProvider,
       openclaw: OpenClawProvider,
       openrouter: ChatCompletionsProvider,
       perplexity: ChatCompletionsProvider,
@@ -238,6 +243,9 @@ describe('provider definition to adapter to registry pipeline', () => {
     expect(registry.getProvider(resolveProviderDefinition('moonshot').wellKnownProviderId)).toBeNull();
     expect(registry.getProvider(resolveProviderDefinition('openrouter').wellKnownProviderId)).toBeNull();
     expect(registry.getProvider(resolveProviderDefinition('perplexity').wellKnownProviderId)).toBeNull();
+    expect(registry.getProvider(resolveProviderDefinition('huggingface-tgi').wellKnownProviderId)).toBeInstanceOf(
+      LaneAwareProvider,
+    );
     expect(registry.getProvider(resolveProviderDefinition('ollama').wellKnownProviderId)).toBeInstanceOf(
       LaneAwareProvider,
     );
