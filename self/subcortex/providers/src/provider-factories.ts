@@ -11,6 +11,7 @@ import { providerFactory as ollamaProviderFactory } from './providers/ollama/pro
 import { providerFactory as openaiProviderFactory } from './providers/openai/provider.js';
 import { providerFactory as openclawProviderFactory } from './providers/openclaw/provider.js';
 import { providerFactory as openrouterProviderFactory } from './providers/openrouter/provider.js';
+import { providerFactory as perplexityProviderFactory } from './providers/perplexity/provider.js';
 
 export * from './schemas/provider-factory.js';
 
@@ -26,6 +27,7 @@ export const CERTIFIED_PROVIDER_FACTORIES = [
   openaiProviderFactory,
   openclawProviderFactory,
   openrouterProviderFactory,
+  perplexityProviderFactory,
 ] as const satisfies readonly ProviderFactoryModule[];
 
 export type CertifiedProviderFactoryVendorKey =

@@ -12,6 +12,7 @@ import { providerDefinition as ollamaProviderDefinition } from './providers/olla
 import { providerDefinition as openaiProviderDefinition } from './providers/openai/definition.js';
 import { providerDefinition as openclawProviderDefinition } from './providers/openclaw/definition.js';
 import { providerDefinition as openrouterProviderDefinition } from './providers/openrouter/definition.js';
+import { providerDefinition as perplexityProviderDefinition } from './providers/perplexity/definition.js';
 
 export * from './schemas/provider-definition.js';
 
@@ -27,6 +28,7 @@ const PROVIDER_DEFINITION_LEAVES = [
   openaiProviderDefinition,
   openclawProviderDefinition,
   openrouterProviderDefinition,
+  perplexityProviderDefinition,
 ] as const satisfies readonly ProviderDefinitionLeaf[];
 
 export const PROVIDER_DEFINITIONS = hydrateProviderDefinitions(PROVIDER_DEFINITION_LEAVES);

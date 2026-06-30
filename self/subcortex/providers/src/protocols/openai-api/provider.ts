@@ -18,6 +18,10 @@ import { TextModelInputSchema } from '../../schemas/text-model-input.js';
 const DEFAULT_ENDPOINT = 'https://api.openai.com';
 const DEFAULT_MODEL_ID = 'gpt-4o';
 const DEFAULT_TIMEOUT_MS = 60_000;
+// OpenAI's Chat Completions path. OpenAI-compatible vendors that expose the
+// same wire format under a different path (e.g. Perplexity at
+// `/chat/completions`, no `/v1`) override this via the `completionsPath` option.
+const DEFAULT_COMPLETIONS_PATH = '/v1/chat/completions';
 
 export const CHAT_COMPLETIONS_PROVIDER_DEFINITION = {
   vendorKey: 'openai',
@@ -53,10 +57,11 @@ export class ChatCompletionsProvider implements IModelProvider {
   private readonly endpoint: string;
   private readonly apiKey: string;
   private readonly timeoutMs: number;
+  private readonly completionsPath: string;
 
   constructor(
     config: ModelProviderConfig,
-    options?: { apiKey?: string; timeoutMs?: number },
+    options?: { apiKey?: string; timeoutMs?: number; completionsPath?: string },
   ) {
     this.config = config;
     this.endpoint =
@@ -65,6 +70,7 @@ export class ChatCompletionsProvider implements IModelProvider {
       DEFAULT_ENDPOINT;
     this.apiKey = options?.apiKey ?? process.env.OPENAI_API_KEY ?? '';
     this.timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    this.completionsPath = options?.completionsPath ?? DEFAULT_COMPLETIONS_PATH;
 
     if (!this.apiKey) {
       throw new NousError(
@@ -83,7 +89,7 @@ export class ChatCompletionsProvider implements IModelProvider {
     const input = this.validateInput(request.input);
     const messages = this.toOpenAiMessages(input);
 
-    const url = `${this.endpoint.replace(/\/$/, '')}/v1/chat/completions`;
+    const url = `${this.endpoint.replace(/\/$/, '')}${this.completionsPath}`;
     const response = await this.fetchWithTimeout(url, {
       method: 'POST',
       headers: {
@@ -145,7 +151,7 @@ export class ChatCompletionsProvider implements IModelProvider {
     const input = this.validateInput(request.input);
     const messages = this.toOpenAiMessages(input);
 
-    const url = `${this.endpoint.replace(/\/$/, '')}/v1/chat/completions`;
+    const url = `${this.endpoint.replace(/\/$/, '')}${this.completionsPath}`;
     const response = await this.fetchWithTimeout(url, {
       method: 'POST',
       headers: {

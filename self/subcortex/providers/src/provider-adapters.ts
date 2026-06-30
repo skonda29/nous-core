@@ -11,6 +11,7 @@ import { providerAdapter as ollamaProviderAdapter } from './providers/ollama/ada
 import { providerAdapter as openaiProviderAdapter } from './providers/openai/adapter.js';
 import { providerAdapter as openclawProviderAdapter } from './providers/openclaw/adapter.js';
 import { providerAdapter as openrouterProviderAdapter } from './providers/openrouter/adapter.js';
+import { providerAdapter as perplexityProviderAdapter } from './providers/perplexity/adapter.js';
 
 export * from './schemas/provider-adapter.js';
 export { providerAdapter as anthropicAdapter, createAnthropicAdapter } from './providers/anthropic/adapter.js';
@@ -24,6 +25,7 @@ export { providerAdapter as ollamaAdapter, createOllamaAdapter, isToolCapableMod
 export { providerAdapter as openaiAdapter, createChatCompletionsAdapter } from './providers/openai/adapter.js';
 export { providerAdapter as openclawAdapter, OPENCLAW_EXECUTION_CAPABILITY_PROFILE, createOpenClawAdapter, renderOpenClawPrompt } from './providers/openclaw/adapter.js';
 export { providerAdapter as openrouterAdapter } from './providers/openrouter/adapter.js';
+export { providerAdapter as perplexityAdapter } from './providers/perplexity/adapter.js';
 
 export const CERTIFIED_PROVIDER_ADAPTER_MODULES = [
   anthropicProviderAdapter,
@@ -37,6 +39,7 @@ export const CERTIFIED_PROVIDER_ADAPTER_MODULES = [
   openaiProviderAdapter,
   openclawProviderAdapter,
   openrouterProviderAdapter,
+  perplexityProviderAdapter,
 ] as const satisfies readonly ProviderAdapterModule[];
 
 export type CertifiedProviderAdapterKey =

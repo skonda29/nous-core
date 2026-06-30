@@ -57,6 +57,7 @@ afterEach(() => {
   delete process.env.MOONSHOT_API_KEY;
   delete process.env.GROQ_API_KEY;
   delete process.env.OPENROUTER_API_KEY;
+  delete process.env.PERPLEXITY_API_KEY;
 });
 
 describe('provider definition to adapter to registry pipeline', () => {
@@ -73,6 +74,7 @@ describe('provider definition to adapter to registry pipeline', () => {
       'openai',
       'openclaw',
       'openrouter',
+      'perplexity',
     ]);
     expect(resolveProviderDefinition('anthropic').defaultModelId).toBe(
       'claude-sonnet-4-20250514',
@@ -183,6 +185,7 @@ describe('provider definition to adapter to registry pipeline', () => {
     process.env.MOONSHOT_API_KEY = 'test-moonshot-key';
     process.env.GROQ_API_KEY = 'test-groq-key';
     process.env.OPENROUTER_API_KEY = 'test-openrouter-key';
+    process.env.PERPLEXITY_API_KEY = 'test-perplexity-key';
 
     const registry = new ProviderRegistry(createEmptyConfig());
     const expectedClassByVendor = {
@@ -197,6 +200,7 @@ describe('provider definition to adapter to registry pipeline', () => {
       ollama: OllamaProvider,
       openclaw: OpenClawProvider,
       openrouter: ChatCompletionsProvider,
+      perplexity: ChatCompletionsProvider,
     };
 
     for (const definition of PROVIDER_DEFINITIONS) {
@@ -233,6 +237,7 @@ describe('provider definition to adapter to registry pipeline', () => {
     expect(registry.getProvider(resolveProviderDefinition('openai').wellKnownProviderId)).toBeNull();
     expect(registry.getProvider(resolveProviderDefinition('moonshot').wellKnownProviderId)).toBeNull();
     expect(registry.getProvider(resolveProviderDefinition('openrouter').wellKnownProviderId)).toBeNull();
+    expect(registry.getProvider(resolveProviderDefinition('perplexity').wellKnownProviderId)).toBeNull();
     expect(registry.getProvider(resolveProviderDefinition('ollama').wellKnownProviderId)).toBeInstanceOf(
       LaneAwareProvider,
     );

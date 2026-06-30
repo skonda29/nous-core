@@ -50,7 +50,7 @@ function makeThrowingProvider() {
 describe('adapter resolver', () => {
   it('aggregates all canonical adapter modules', () => {
     // `chat-completions` appears multiple times: deepinfra, groq, llama-cpp,
-    // moonshot, openai, and openrouter all reuse the shared chat-completions adapter.
+    // moonshot, openai, openrouter, and perplexity all reuse the shared chat-completions adapter.
     // The resolver keys modules by adapterKey, so the duplicates collapse to a single
     // resolvable module. Order follows the generated CERTIFIED_PROVIDER_ADAPTER_MODULES
     // (alphabetical by vendor) with the text fallback appended last.
@@ -65,6 +65,7 @@ describe('adapter resolver', () => {
       'ollama',
       'chat-completions',
       'openclaw',
+      'chat-completions',
       'chat-completions',
       'text',
     ]);
@@ -110,6 +111,7 @@ describe('adapter resolver', () => {
     expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'moonshot' }))).toBe('chat-completions');
     expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'openclaw' }))).toBe('openclaw');
     expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'openrouter' }))).toBe('chat-completions');
+    expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'perplexity' }))).toBe('chat-completions');
   });
 
   it('falls back to name heuristic for non-catalog provider configs', () => {
