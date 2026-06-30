@@ -5,6 +5,7 @@ import { providerFactory as codexCliProviderFactory } from './providers/codex-cl
 import { providerFactory as deepinfraProviderFactory } from './providers/deepinfra/provider.js';
 import { providerFactory as githubCopilotCliProviderFactory } from './providers/github-copilot-cli/provider.js';
 import { providerFactory as groqProviderFactory } from './providers/groq/provider.js';
+import { providerFactory as huggingfaceTgiProviderFactory } from './providers/huggingface-tgi/provider.js';
 import { providerFactory as llamaCppProviderFactory } from './providers/llama-cpp/provider.js';
 import { providerFactory as moonshotProviderFactory } from './providers/moonshot/provider.js';
 import { providerFactory as ollamaProviderFactory } from './providers/ollama/provider.js';
@@ -20,6 +21,7 @@ export const CERTIFIED_PROVIDER_FACTORIES = [
   deepinfraProviderFactory,
   githubCopilotCliProviderFactory,
   groqProviderFactory,
+  huggingfaceTgiProviderFactory,
   llamaCppProviderFactory,
   moonshotProviderFactory,
   ollamaProviderFactory,

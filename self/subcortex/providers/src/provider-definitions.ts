@@ -6,6 +6,7 @@ import { providerDefinition as codexCliProviderDefinition } from './providers/co
 import { providerDefinition as deepinfraProviderDefinition } from './providers/deepinfra/definition.js';
 import { providerDefinition as githubCopilotCliProviderDefinition } from './providers/github-copilot-cli/definition.js';
 import { providerDefinition as groqProviderDefinition } from './providers/groq/definition.js';
+import { providerDefinition as huggingfaceTgiProviderDefinition } from './providers/huggingface-tgi/definition.js';
 import { providerDefinition as llamaCppProviderDefinition } from './providers/llama-cpp/definition.js';
 import { providerDefinition as moonshotProviderDefinition } from './providers/moonshot/definition.js';
 import { providerDefinition as ollamaProviderDefinition } from './providers/ollama/definition.js';
@@ -21,6 +22,7 @@ const PROVIDER_DEFINITION_LEAVES = [
   deepinfraProviderDefinition,
   githubCopilotCliProviderDefinition,
   groqProviderDefinition,
+  huggingfaceTgiProviderDefinition,
   llamaCppProviderDefinition,
   moonshotProviderDefinition,
   ollamaProviderDefinition,

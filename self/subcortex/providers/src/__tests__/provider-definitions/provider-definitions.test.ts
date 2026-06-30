@@ -30,15 +30,20 @@ const expectedDefinitions = {
     defaultModelId: 'codex-cli/default',
     envVar: undefined,
   },
+  ollama: {
+    defaultEndpoint: 'http://localhost:11434',
+    defaultModelId: 'llama3.2',
+    envVar: undefined,
+  },
   'github-copilot-cli': {
     defaultEndpoint: 'http://localhost',
     defaultModelId: 'openai/gpt-4o-mini',
     envVar: undefined,
   },
-  ollama: {
-    defaultEndpoint: 'http://localhost:11434',
-    defaultModelId: 'llama3.2',
-    envVar: undefined,
+  'huggingface-tgi': {
+    defaultEndpoint: 'http://localhost:8080',
+    defaultModelId: 'deepseek-ai/DeepSeek-V3',
+    envVar: 'HUGGINGFACE_API_KEY',
   },
   groq: {
     defaultEndpoint: 'https://api.groq.com/openai',
@@ -75,6 +80,7 @@ describe('provider definitions catalog', () => {
       'deepinfra',
       'github-copilot-cli',
       'groq',
+      'huggingface-tgi',
       'llama-cpp',
       'moonshot',
       'ollama',
@@ -119,6 +125,7 @@ describe('provider definitions catalog', () => {
       join('providers', 'openclaw', 'definition.ts'),
       join('protocols', 'openai-api', 'provider.ts'),
       join('providers', 'ollama', 'implementation.ts'),
+      join('providers', 'huggingface-tgi', 'definition.ts'),
       join('providers', 'llama-cpp', 'definition.ts'),
       join('providers', 'deepinfra', 'definition.ts'),
       join('providers', 'openrouter', 'definition.ts'),
