@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { ProviderDefinition } from '@nous/subcortex-providers';
-import { fetchProviderModels } from '../src/provider-model-discovery';
+import { resolveProviderDefinition } from '@nous/subcortex-providers';
+import { fetchProviderModels, testProviderApiKey } from '../src/provider-model-discovery';
 
 function providerDefinition(
   overrides: Partial<ProviderDefinition> = {},
@@ -230,5 +231,47 @@ describe('provider model discovery', () => {
       method: 'GET',
       headers: {},
     });
+  });
+});
+
+describe('testProviderApiKey', () => {
+  const openrouterDefinition = resolveProviderDefinition('openrouter');
+
+  it('validates OpenRouter keys against /v1/key and rejects invalid credentials', async () => {
+    const fetchImpl = vi.fn(async () => new Response('Unauthorized', { status: 401 }));
+
+    const result = await testProviderApiKey(openrouterDefinition, 'bad-key', fetchImpl);
+
+    expect(fetchImpl).toHaveBeenCalledWith('https://openrouter.ai/api/v1/key', {
+      method: 'GET',
+      headers: {
+        Authorization: 'Bearer bad-key',
+      },
+    });
+    expect(result).toEqual({
+      valid: false,
+      error: 'HTTP 401: Unauthorized',
+    });
+  });
+
+  it('accepts valid OpenRouter keys when /v1/key returns 200', async () => {
+    const fetchImpl = vi.fn(async () => jsonResponse({
+      data: { label: 'sk-or-test' },
+    }));
+
+    const result = await testProviderApiKey(openrouterDefinition, 'good-key', fetchImpl);
+
+    expect(fetchImpl).toHaveBeenCalledWith('https://openrouter.ai/api/v1/key', {
+      method: 'GET',
+      headers: {
+        Authorization: 'Bearer good-key',
+      },
+    });
+    expect(result).toEqual({ valid: true, error: null });
+  });
+
+  it('prefers healthCheckEndpoint over the public model-list endpoint', () => {
+    expect(openrouterDefinition.healthCheckEndpoint).toBe('/v1/key');
+    expect(openrouterDefinition.modelListEndpoint).toBe('/v1/models');
   });
 });

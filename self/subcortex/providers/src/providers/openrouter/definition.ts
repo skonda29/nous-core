@@ -31,6 +31,8 @@ export const OPENROUTER_PROVIDER_DEFINITION = {
   },
   modelListEndpoint: '/v1/models',
   modelListFormat: 'openai-models',
+  // `/v1/models` is public (200 without auth); key validation uses `/v1/key` instead.
+  healthCheckEndpoint: '/v1/key',
   capabilities: {
     streaming: true,
     modelListing: true,

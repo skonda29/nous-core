@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { ProviderId } from '@nous/shared';
+import { NousError } from '@nous/shared';
 import {
   OPENROUTER_DEFAULT_ENDPOINT,
   OPENROUTER_DEFAULT_MODEL_ID,
@@ -21,6 +22,27 @@ const MOCK_CONFIG = {
 };
 
 describe('OpenRouter provider leaf', () => {
+  const originalOpenRouterKey = process.env.OPENROUTER_API_KEY;
+  const originalOpenAiKey = process.env.OPENAI_API_KEY;
+
+  beforeEach(() => {
+    delete process.env.OPENROUTER_API_KEY;
+    delete process.env.OPENAI_API_KEY;
+  });
+
+  afterEach(() => {
+    if (originalOpenRouterKey === undefined) {
+      delete process.env.OPENROUTER_API_KEY;
+    } else {
+      process.env.OPENROUTER_API_KEY = originalOpenRouterKey;
+    }
+    if (originalOpenAiKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = originalOpenAiKey;
+    }
+  });
+
   it('exposes OpenRouter-specific OpenAI-compatible metadata', () => {
     expect(providerDefinition).toBe(OPENROUTER_PROVIDER_DEFINITION);
     expect(OPENROUTER_PROVIDER_DEFINITION.vendorKey).toBe('openrouter');
@@ -36,6 +58,7 @@ describe('OpenRouter provider leaf', () => {
     });
     expect(OPENROUTER_PROVIDER_DEFINITION.modelListEndpoint).toBe('/v1/models');
     expect(OPENROUTER_PROVIDER_DEFINITION.modelListFormat).toBe('openai-models');
+    expect(OPENROUTER_PROVIDER_DEFINITION.healthCheckEndpoint).toBe('/v1/key');
   });
 
   it('advertises streaming and model listing but not nativeToolUse (pending the #390 tool-use bridge)', () => {
@@ -59,6 +82,30 @@ describe('OpenRouter provider leaf', () => {
   it('factory builds a ChatCompletionsProvider for the openrouter vendor', () => {
     const provider = providerFactory.create(MOCK_CONFIG, { apiKey: 'test-openrouter-key' });
     expect(providerFactory.vendorKey).toBe('openrouter');
+    expect(provider).toBeInstanceOf(ChatCompletionsProvider);
+    expect(provider.getConfig()).toEqual(MOCK_CONFIG);
+  });
+
+  it('factory throws when no OpenRouter API key is available', () => {
+    expect(() => providerFactory.create(MOCK_CONFIG, {})).toThrow(NousError);
+    expect(() => providerFactory.create(MOCK_CONFIG, {})).toThrow(
+      'OpenRouter API key required — set OPENROUTER_API_KEY or pass apiKey option',
+    );
+  });
+
+  it('factory does not fall back to OPENAI_API_KEY when OpenRouter key is missing', () => {
+    process.env.OPENAI_API_KEY = 'test-openai-key';
+
+    expect(() => providerFactory.create(MOCK_CONFIG, {})).toThrow(NousError);
+    expect(() => providerFactory.create(MOCK_CONFIG, {})).toThrow(
+      'OpenRouter API key required — set OPENROUTER_API_KEY or pass apiKey option',
+    );
+  });
+
+  it('factory resolves OPENROUTER_API_KEY from the environment when options omit apiKey', () => {
+    process.env.OPENROUTER_API_KEY = 'env-openrouter-key';
+
+    const provider = providerFactory.create(MOCK_CONFIG, {});
     expect(provider).toBeInstanceOf(ChatCompletionsProvider);
     expect(provider.getConfig()).toEqual(MOCK_CONFIG);
   });
