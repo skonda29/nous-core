@@ -52,8 +52,10 @@ function configFromDefinition(definition: (typeof PROVIDER_DEFINITIONS)[number])
 afterEach(() => {
   delete process.env.ANTHROPIC_API_KEY;
   delete process.env.OPENAI_API_KEY;
+  delete process.env.DEEPINFRA_API_KEY;
   delete process.env.MOONSHOT_API_KEY;
   delete process.env.GROQ_API_KEY;
+  delete process.env.OPENROUTER_API_KEY;
 });
 
 describe('provider definition to adapter to registry pipeline', () => {
@@ -68,6 +70,7 @@ describe('provider definition to adapter to registry pipeline', () => {
       'moonshot',
       'ollama',
       'openai',
+      'openrouter',
     ]);
     expect(resolveProviderDefinition('anthropic').defaultModelId).toBe(
       'claude-sonnet-4-20250514',
@@ -174,8 +177,10 @@ describe('provider definition to adapter to registry pipeline', () => {
   it('constructs providers from registry-derived definitions with env-var credentials', () => {
     process.env.ANTHROPIC_API_KEY = 'test-anthropic-key';
     process.env.OPENAI_API_KEY = 'test-openai-key';
+    process.env.DEEPINFRA_API_KEY = 'test-deepinfra-key';
     process.env.MOONSHOT_API_KEY = 'test-moonshot-key';
     process.env.GROQ_API_KEY = 'test-groq-key';
+    process.env.OPENROUTER_API_KEY = 'test-openrouter-key';
 
     const registry = new ProviderRegistry(createEmptyConfig());
     const expectedClassByVendor = {
@@ -188,6 +193,7 @@ describe('provider definition to adapter to registry pipeline', () => {
       openai: ChatCompletionsProvider,
       groq: ChatCompletionsProvider,
       ollama: OllamaProvider,
+      openrouter: ChatCompletionsProvider,
     };
 
     for (const definition of PROVIDER_DEFINITIONS) {
@@ -217,11 +223,13 @@ describe('provider definition to adapter to registry pipeline', () => {
     } as any);
 
     expect(registry.getProvider(resolveProviderDefinition('anthropic').wellKnownProviderId)).toBeNull();
+    expect(registry.getProvider(resolveProviderDefinition('deepinfra').wellKnownProviderId)).toBeNull();
     expect(registry.getProvider(resolveProviderDefinition('codex-cli').wellKnownProviderId)).toBeInstanceOf(
       LaneAwareProvider,
     );
     expect(registry.getProvider(resolveProviderDefinition('openai').wellKnownProviderId)).toBeNull();
     expect(registry.getProvider(resolveProviderDefinition('moonshot').wellKnownProviderId)).toBeNull();
+    expect(registry.getProvider(resolveProviderDefinition('openrouter').wellKnownProviderId)).toBeNull();
     expect(registry.getProvider(resolveProviderDefinition('ollama').wellKnownProviderId)).toBeInstanceOf(
       LaneAwareProvider,
     );

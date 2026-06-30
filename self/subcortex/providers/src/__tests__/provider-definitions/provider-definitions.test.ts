@@ -55,6 +55,11 @@ const expectedDefinitions = {
     defaultModelId: 'meta-llama/Meta-Llama-3.1-70B-Instruct',
     envVar: 'DEEPINFRA_API_KEY',
   },
+  openrouter: {
+    defaultEndpoint: 'https://openrouter.ai/api',
+    defaultModelId: 'openrouter/auto',
+    envVar: 'OPENROUTER_API_KEY',
+  },
 } as const;
 
 describe('provider definitions catalog', () => {
@@ -69,6 +74,7 @@ describe('provider definitions catalog', () => {
       'moonshot',
       'ollama',
       'openai',
+      'openrouter',
     ]);
   });
 
@@ -108,6 +114,7 @@ describe('provider definitions catalog', () => {
       join('providers', 'ollama', 'implementation.ts'),
       join('providers', 'llama-cpp', 'definition.ts'),
       join('providers', 'deepinfra', 'definition.ts'),
+      join('providers', 'openrouter', 'definition.ts'),
     ];
     const forbidden = [
       /fetch/,
