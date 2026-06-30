@@ -20,7 +20,7 @@ import type { ProviderDefinitionLeaf } from '../../schemas/provider-definition.j
 import { TextModelInputSchema, type TextModelInput } from '../../schemas/text-model-input.js';
 
 const DEFAULT_ENDPOINT = 'https://api.mistral.ai';
-const DEFAULT_MODEL_ID = 'mistral-medium-latest';
+const DEFAULT_MODEL_ID = 'mistral-large-latest';
 const DEFAULT_TIMEOUT_MS = 60_000;
 const DEFAULT_MAX_TOKENS = 4096;
 
@@ -30,7 +30,7 @@ export const MISTRAL_PROVIDER_DEFINITION = {
   providerType: 'text',
   providerClass: 'remote_text',
   protocol: 'chat-completions',
-  adapterKey: 'chat-completions',
+  adapterKey: 'mistral',
   defaultEndpoint: DEFAULT_ENDPOINT,
   defaultModelId: DEFAULT_MODEL_ID,
   auth: {
@@ -130,7 +130,9 @@ export class MistralProvider implements IModelProvider {
     await this.throwForResponseError(response);
 
     const data = (await response.json()) as MistralChatResponse;
-    const output = data.choices?.[0]?.message?.content ?? '';
+    const message = data.choices?.[0]?.message;
+    const hasToolCalls = Array.isArray(message?.tool_calls) && message.tool_calls.length > 0;
+    const output = hasToolCalls ? { choices: data.choices } : (message?.content ?? '');
 
     return {
       output,
@@ -197,7 +199,7 @@ export class MistralProvider implements IModelProvider {
             yield { content, done: false };
           }
 
-          if (finishReason === 'stop' || finishReason === 'length') {
+          if (finishReason === 'stop' || finishReason === 'length' || finishReason === 'tool_calls') {
             yield {
               content: '',
               done: true,
@@ -262,7 +264,7 @@ export class MistralProvider implements IModelProvider {
   }
 
   private getChatUrl(): string {
-    return `${this.endpoint.replace(/\/$/, '')}/v1/chat/completions`;
+    return `${this.endpoint.replace(/\/v1\/?$/, '').replace(/\/$/, '')}/v1/chat/completions`;
   }
 
   private async throwForResponseError(response: Response): Promise<void> {

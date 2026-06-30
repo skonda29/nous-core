@@ -47,7 +47,7 @@ const expectedDefinitions = {
   },
   mistral: {
     defaultEndpoint: 'https://api.mistral.ai',
-    defaultModelId: 'mistral-medium-latest',
+    defaultModelId: 'mistral-large-latest',
     envVar: 'MISTRAL_API_KEY',
   },
 } as const;

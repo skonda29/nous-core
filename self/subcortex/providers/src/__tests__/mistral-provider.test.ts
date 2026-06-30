@@ -22,7 +22,7 @@ const MOCK_CONFIG = {
   id: '00000000-0000-0000-0000-000000000201' as ProviderId,
   name: 'Mistral',
   type: 'text' as const,
-  modelId: 'mistral-medium-latest',
+  modelId: 'mistral-large-latest',
   endpoint: 'https://api.mistral.ai',
   isLocal: false,
   capabilities: ['chat', 'streaming'],
@@ -42,7 +42,7 @@ describe('MISTRAL_PROVIDER_DEFINITION', () => {
 
   it('has correct vendorKey, adapterKey, and protocol', () => {
     expect(MISTRAL_PROVIDER_DEFINITION.vendorKey).toBe('mistral');
-    expect(MISTRAL_PROVIDER_DEFINITION.adapterKey).toBe('chat-completions');
+    expect(MISTRAL_PROVIDER_DEFINITION.adapterKey).toBe('mistral');
     expect(MISTRAL_PROVIDER_DEFINITION.protocol).toBe('chat-completions');
   });
 
@@ -305,7 +305,7 @@ describe('MistralProvider', () => {
     expect(headers['Authorization']).toBe('Bearer test-mistral-key');
     expect(headers['x-api-key']).toBeUndefined();
     expect(body).toEqual({
-      model: 'mistral-medium-latest',
+      model: 'mistral-large-latest',
       max_tokens: 1024,
       messages: [
         { role: 'system', content: 'Be concise.' },
@@ -343,7 +343,7 @@ describe('MistralProvider', () => {
     const [, init] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit];
     const body = JSON.parse(String(init.body)) as Record<string, unknown>;
     expect(body).toEqual({
-      model: 'mistral-medium-latest',
+      model: 'mistral-large-latest',
       max_tokens: 4096,
       messages: [{ role: 'user', content: 'Write a haiku.' }],
       stream: false,
@@ -436,6 +436,222 @@ describe('MistralProvider', () => {
       { content: ' world', done: false },
       { content: '', done: true, usage: { inputTokens: 8, outputTokens: 3 } },
     ]);
+  });
+});
+
+describe('MistralProvider — invoke() tool_calls passthrough (Issue 2)', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn());
+    process.env.MISTRAL_API_KEY = 'test-mistral-key';
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    delete process.env.MISTRAL_API_KEY;
+  });
+
+  it('returns structured {choices} output when response contains tool_calls', async () => {
+    const provider = new MistralProvider(MOCK_CONFIG, { apiKey: 'test-mistral-key' });
+    const toolCallResponse = {
+      choices: [
+        {
+          message: {
+            content: null,
+            tool_calls: [
+              { id: 'call_abc', type: 'function', function: { name: 'search', arguments: '{"q":"test"}' } },
+            ],
+          },
+          finish_reason: 'tool_calls',
+        },
+      ],
+      usage: { prompt_tokens: 10, completion_tokens: 5 },
+    };
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify(toolCallResponse), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    );
+
+    const result = await provider.invoke({
+      role: 'cortex-chat',
+      input: { prompt: 'Call a tool.' },
+      traceId: TRACE_ID,
+    });
+
+    expect(result.output).toEqual({ choices: toolCallResponse.choices });
+  });
+
+  it('returns string output when response has no tool_calls', async () => {
+    const provider = new MistralProvider(MOCK_CONFIG, { apiKey: 'test-mistral-key' });
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(
+        JSON.stringify({ choices: [{ message: { content: 'text reply' }, finish_reason: 'stop' }] }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
+
+    const result = await provider.invoke({
+      role: 'cortex-chat',
+      input: { prompt: 'hi' },
+      traceId: TRACE_ID,
+    });
+
+    expect(result.output).toBe('text reply');
+  });
+});
+
+describe('MistralProvider — stream() finish_reason tool_calls (Issue 3)', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn());
+    process.env.MISTRAL_API_KEY = 'test-mistral-key';
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    delete process.env.MISTRAL_API_KEY;
+  });
+
+  it('emits done chunk when finish_reason is tool_calls', async () => {
+    const provider = new MistralProvider(MOCK_CONFIG, { apiKey: 'test-mistral-key' });
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(
+          encoder.encode(
+            [
+              'data: {"choices":[{"delta":{},"finish_reason":"tool_calls"}],"usage":{"prompt_tokens":5,"completion_tokens":2}}',
+              '',
+              'data: [DONE]',
+              '',
+            ].join('\n'),
+          ),
+        );
+        controller.close();
+      },
+    });
+    vi.mocked(fetch).mockResolvedValue(new Response(stream, { status: 200 }));
+
+    const chunks: Array<{ content: string; done: boolean }> = [];
+    for await (const chunk of provider.stream({
+      role: 'cortex-chat',
+      input: { prompt: 'call a tool' },
+      traceId: TRACE_ID,
+    })) {
+      chunks.push(chunk);
+    }
+
+    expect(chunks).toContainEqual(expect.objectContaining({ done: true }));
+  });
+});
+
+describe('MistralProvider — getChatUrl endpoint normalization (Issue 5)', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn());
+    process.env.MISTRAL_API_KEY = 'test-mistral-key';
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    delete process.env.MISTRAL_API_KEY;
+  });
+
+  it('does not double-append /v1 when endpoint already ends with /v1', async () => {
+    const provider = new MistralProvider(
+      { ...MOCK_CONFIG, endpoint: 'https://api.mistral.ai/v1' },
+      { apiKey: 'test-mistral-key' },
+    );
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(
+        JSON.stringify({ choices: [{ message: { content: 'ok' }, finish_reason: 'stop' }] }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
+
+    await provider.invoke({ role: 'cortex-chat', input: { prompt: 'hi' }, traceId: TRACE_ID });
+
+    const [url] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://api.mistral.ai/v1/chat/completions');
+  });
+
+  it('does not double-append /v1 when endpoint ends with /v1/', async () => {
+    const provider = new MistralProvider(
+      { ...MOCK_CONFIG, endpoint: 'https://api.mistral.ai/v1/' },
+      { apiKey: 'test-mistral-key' },
+    );
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(
+        JSON.stringify({ choices: [{ message: { content: 'ok' }, finish_reason: 'stop' }] }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
+
+    await provider.invoke({ role: 'cortex-chat', input: { prompt: 'hi' }, traceId: TRACE_ID });
+
+    const [url] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://api.mistral.ai/v1/chat/completions');
+  });
+});
+
+describe('createMistralAdapter — formatRequest tool frame handling (Issue 4)', () => {
+  const adapter = createMistralAdapter();
+
+  it('emits tool role with tool_call_id when frame has metadata.tool_call_id', () => {
+    const input: AdapterFormatInput = {
+      systemPrompt: 'test',
+      context: [
+        {
+          role: 'tool',
+          content: '{"result":"ok"}',
+          source: 'tool_result',
+          createdAt: '2026-01-01T00:00:00Z',
+          metadata: { tool_call_id: 'call_abc123' },
+        },
+      ],
+    };
+    const result = adapter.formatRequest(input);
+    const messages = result.input.messages as Array<{ role: string; content: string; tool_call_id?: string }>;
+    const toolMsg = messages.find((m) => m.role === 'tool');
+    expect(toolMsg).toBeDefined();
+    expect(toolMsg?.tool_call_id).toBe('call_abc123');
+    expect(toolMsg?.content).toBe('{"result":"ok"}');
+  });
+
+  it('falls back to user role when tool frame has no metadata.tool_call_id', () => {
+    const input: AdapterFormatInput = {
+      systemPrompt: 'test',
+      context: [
+        { role: 'tool', content: 'result text', source: 'tool_result', createdAt: '2026-01-01T00:00:00Z' },
+      ],
+    };
+    const result = adapter.formatRequest(input);
+    const messages = result.input.messages as Array<{ role: string; content: string }>;
+    const toolMsg = messages.find((m) => m.content === 'result text');
+    expect(toolMsg?.role).toBe('user');
+  });
+});
+
+describe('createMistralAdapter — parseResponse missing message (Issue 7)', () => {
+  const adapter = createMistralAdapter();
+
+  it('returns empty string when choices[0].message is absent', () => {
+    const result = adapter.parseResponse({ choices: [{ finish_reason: 'stop' }] }, TRACE_ID);
+    expect(result.response).toBe('');
+    expect(result.toolCalls).toEqual([]);
+  });
+
+  it('returns empty string when choices array is empty', () => {
+    const result = adapter.parseResponse({ choices: [] }, TRACE_ID);
+    expect(result.response).toBe('');
+  });
+});
+
+describe('MISTRAL_PROVIDER_DEFINITION — adapterKey isolation (Issue 1)', () => {
+  it('adapterKey is mistral, not chat-completions', () => {
+    expect(MISTRAL_PROVIDER_DEFINITION.adapterKey).toBe('mistral');
+  });
+});
+
+describe('MISTRAL_PROVIDER_DEFINITION — defaultModelId is mistral-large-latest (Issue 6)', () => {
+  it('defaultModelId is mistral-large-latest', () => {
+    expect(MISTRAL_PROVIDER_DEFINITION.defaultModelId).toBe('mistral-large-latest');
   });
 });
 

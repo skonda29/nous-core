@@ -54,7 +54,7 @@ function detectContentType(text: string): { response: string; contentType: 'text
   return { response: text, contentType: 'text' };
 }
 
-type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string };
+type ChatMessage = { role: 'system' | 'user' | 'assistant' | 'tool'; content: string; tool_call_id?: string };
 
 function flattenSystemPrompt(systemPrompt: string | string[]): string {
   return Array.isArray(systemPrompt) ? systemPrompt.join('\n') : systemPrompt;
@@ -71,7 +71,11 @@ function formatContextMessages(
     } else if (frame.role === 'system') {
       messages.push({ role: 'user', content: frame.content });
     } else if (frame.role === 'tool') {
-      messages.push({ role: 'user', content: frame.content });
+      if (frame.metadata?.tool_call_id) {
+        messages.push({ role: 'tool', content: frame.content, tool_call_id: frame.metadata.tool_call_id as string });
+      } else {
+        messages.push({ role: 'user', content: frame.content });
+      }
     }
   }
 
@@ -135,7 +139,7 @@ function parseMistralResponse(output: unknown, log?: ILogChannel): ParsedModelOu
 
   if (!message) {
     return {
-      response: String(output),
+      response: '',
       toolCalls: [],
       memoryCandidates: [],
       contentType: 'text',
@@ -216,7 +220,7 @@ export function createMistralAdapter(log?: ILogChannel): ProviderAdapter {
 }
 
 export const providerAdapter = defineProviderAdapter({
-  adapterKey: 'chat-completions',
+  adapterKey: 'mistral',
   displayName: 'Mistral',
   protocol: 'chat-completions',
   capabilities: MISTRAL_CAPABILITIES,
