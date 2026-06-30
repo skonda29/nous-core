@@ -50,6 +50,11 @@ const expectedDefinitions = {
     defaultModelId: 'llama3.2',
     envVar: undefined,
   },
+  deepinfra: {
+    defaultEndpoint: 'https://api.deepinfra.com/v1/openai',
+    defaultModelId: 'meta-llama/Meta-Llama-3.1-70B-Instruct',
+    envVar: 'DEEPINFRA_API_KEY',
+  },
 } as const;
 
 describe('provider definitions catalog', () => {
@@ -57,6 +62,7 @@ describe('provider definitions catalog', () => {
     expect(PROVIDER_DEFINITIONS.map((definition) => definition.vendorKey).sort()).toEqual([
       'anthropic',
       'codex-cli',
+      'deepinfra',
       'github-copilot-cli',
       'groq',
       'llama-cpp',
@@ -101,6 +107,7 @@ describe('provider definitions catalog', () => {
       join('protocols', 'openai-api', 'provider.ts'),
       join('providers', 'ollama', 'implementation.ts'),
       join('providers', 'llama-cpp', 'definition.ts'),
+      join('providers', 'deepinfra', 'definition.ts'),
     ];
     const forbidden = [
       /fetch/,
