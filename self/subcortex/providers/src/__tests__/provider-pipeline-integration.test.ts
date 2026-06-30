@@ -59,6 +59,10 @@ describe('provider definition to adapter to registry pipeline', () => {
     expect(PROVIDER_DEFINITIONS.map((definition) => definition.vendorKey)).toEqual([
       'anthropic',
       'codex-cli',
+      "github-copilot-cli",
+      "groq",
+      "huggingface-tgi",
+      "llama-cpp",
       'ollama',
       'openai',
     ]);

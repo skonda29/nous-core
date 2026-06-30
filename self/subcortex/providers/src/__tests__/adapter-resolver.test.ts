@@ -58,6 +58,7 @@ describe('adapter resolver', () => {
       'github-copilot-cli',
       'chat-completions',
       'chat-completions',
+      'chat-completions',
       'ollama',
       'chat-completions',
       'text',

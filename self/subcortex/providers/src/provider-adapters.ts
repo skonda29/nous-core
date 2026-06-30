@@ -4,8 +4,8 @@ import { providerAdapter as anthropicProviderAdapter } from './providers/anthrop
 import { providerAdapter as codexCliProviderAdapter } from './providers/codex-cli/adapter.js';
 import { providerAdapter as githubCopilotCliProviderAdapter } from './providers/github-copilot-cli/adapter.js';
 import { providerAdapter as groqProviderAdapter } from './providers/groq/adapter.js';
-import { providerAdapter as llamaCppProviderAdapter } from './providers/llama-cpp/adapter.js';
 import { providerAdapter as huggingfaceTgiProviderAdapter } from './providers/huggingface-tgi/adapter.js';
+import { providerAdapter as llamaCppProviderAdapter } from './providers/llama-cpp/adapter.js';
 import { providerAdapter as ollamaProviderAdapter } from './providers/ollama/adapter.js';
 import { providerAdapter as openaiProviderAdapter } from './providers/openai/adapter.js';
 
@@ -14,8 +14,8 @@ export { providerAdapter as anthropicAdapter, createAnthropicAdapter } from './p
 export { providerAdapter as codexCliAdapter, CODEX_CLI_EXECUTION_CAPABILITY_PROFILE, createCodexCliAdapter, renderCodexCliPrompt } from './providers/codex-cli/adapter.js';
 export { providerAdapter as githubCopilotCliAdapter } from './providers/github-copilot-cli/adapter.js';
 export { providerAdapter as groqAdapter } from './providers/groq/adapter.js';
-export { providerAdapter as llamaCppAdapter } from './providers/llama-cpp/adapter.js';
 export { providerAdapter as huggingfaceTgiAdapter } from './providers/huggingface-tgi/adapter.js';
+export { providerAdapter as llamaCppAdapter } from './providers/llama-cpp/adapter.js';
 export { providerAdapter as ollamaAdapter, createOllamaAdapter, isToolCapableModel } from './providers/ollama/adapter.js';
 export { providerAdapter as openaiAdapter, createChatCompletionsAdapter } from './providers/openai/adapter.js';
 
@@ -24,8 +24,8 @@ export const CERTIFIED_PROVIDER_ADAPTER_MODULES = [
   codexCliProviderAdapter,
   githubCopilotCliProviderAdapter,
   groqProviderAdapter,
-  llamaCppProviderAdapter,
   huggingfaceTgiProviderAdapter,
+  llamaCppProviderAdapter,
   ollamaProviderAdapter,
   openaiProviderAdapter,
 ] as const satisfies readonly ProviderAdapterModule[];

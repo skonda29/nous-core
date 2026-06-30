@@ -4,7 +4,7 @@ import type { ProviderFactoryModule } from '../../schemas/provider-factory.js';
 export const providerFactory = {
   vendorKey: 'huggingface-tgi',
   create(config, options) {
-    const apiKey = options?.apiKey ?? process.env.HUGGINGFACE_API_KEY ?? '';
+    const apiKey = options?.apiKey ?? process.env.HUGGINGFACE_API_KEY ?? 'default-no-key';
 
     return new ChatCompletionsProvider(config, {
       apiKey,

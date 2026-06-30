@@ -30,31 +30,26 @@ const expectedDefinitions = {
     defaultModelId: 'llama3.2',
     envVar: undefined,
   },
-    'github-copilot-cli': {
+  'github-copilot-cli': {
     defaultEndpoint: 'http://localhost',
     defaultModelId: 'openai/gpt-4o-mini',
     envVar: undefined,
   },
   'huggingface-tgi': {
     defaultEndpoint: 'http://localhost:8080',
-    defaultModelId: 'gpt-5.4',
+    defaultModelId: 'deepseek-ai/DeepSeek-V3', //placeholder model (no deault)
     envVar: 'HUGGINGFACE_API_KEY',
-  }
+  },
   groq: {
     defaultEndpoint: 'https://api.groq.com/openai',
     defaultModelId: 'llama-3.3-70b-versatile',
     envVar: 'GROQ_API_KEY',
   },
-  ollama: {
-    defaultEndpoint: 'http://localhost:11434',
+    'llama-cpp': {
+    defaultEndpoint: 'http://localhost:8080',
     defaultModelId: 'llama3.2',
     envVar: undefined,
   },
-  'huggingface-tgi': {
-    defaultEndpoint: 'http://localhost:8080',
-    defaultModelId: 'gpt-5.4',
-    envVar: 'HUGGINGFACE_API_KEY',
-  }
 } as const;
 
 describe('provider definitions catalog', () => {
@@ -62,6 +57,10 @@ describe('provider definitions catalog', () => {
     expect(PROVIDER_DEFINITIONS.map((definition) => definition.vendorKey).sort()).toEqual([
       'anthropic',
       'codex-cli',
+      'github-copilot-cli',
+      'groq',
+      'huggingface-tgi',
+      'llama-cpp',
       'ollama',
       'openai',
     ]);

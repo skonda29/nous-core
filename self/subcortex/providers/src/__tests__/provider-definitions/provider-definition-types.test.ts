@@ -19,8 +19,9 @@ type _ProviderVendorKeyIsExact = Expect<
   Equal<ProviderVendorKey, 'anthropic' | 'codex-cli' | 'github-copilot-cli' | 'groq' | 'llama-cpp' | 'huggingface-tgi' | 'openai' | 'ollama'>
 >;
 type _BootstrapProviderKeyIsExact = Expect<
-  Equal<BootstrapProviderKey, 'anthropic' | 'codex-cli' | 'openai' | 'ollama'>
+  Equal<BootstrapProviderKey, 'anthropic' | 'codex-cli' | 'github-copilot-cli' | 'groq' | 'llama-cpp' | 'huggingface-tgi' | 'openai' | 'ollama'>
 >;
+
 type _ProviderVendorKeyDoesNotWiden = Expect<Equal<string extends ProviderVendorKey ? true : false, false>>;
 
 describe('provider definition type derivation', () => {
@@ -29,7 +30,7 @@ describe('provider definition type derivation', () => {
       (definition) => definition.vendorKey,
     );
 
-    expect(keys.sort()).toEqual(['anthropic', 'codex-cli', 'ollama', 'openai']);
+    expect(keys.sort()).toEqual(['anthropic', 'codex-cli',   "github-copilot-cli", "groq", "huggingface-tgi", "llama-cpp",'ollama', 'openai']);
   });
 
   it('supports local leaf-addition fixtures without production branch logic', () => {
