@@ -19,7 +19,7 @@ describe('provider aggregate codegen', () => {
       .trim()
       .split(/\r?\n/);
 
-    expect(output).toEqual(['anthropic', 'codex-cli', 'deepinfra', 'github-copilot-cli', 'groq', 'llama-cpp', 'moonshot', 'ollama', 'openai', 'openrouter']);
+    expect(output).toEqual(['anthropic', 'codex-cli', 'deepinfra', 'github-copilot-cli', 'groq', 'llama-cpp', 'moonshot', 'ollama', 'openai', 'openclaw', 'openrouter']);
   });
 
   it('keeps checked-in generated files in sync with provider leaves', () => {

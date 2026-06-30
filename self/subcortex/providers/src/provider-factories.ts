@@ -9,6 +9,7 @@ import { providerFactory as llamaCppProviderFactory } from './providers/llama-cp
 import { providerFactory as moonshotProviderFactory } from './providers/moonshot/provider.js';
 import { providerFactory as ollamaProviderFactory } from './providers/ollama/provider.js';
 import { providerFactory as openaiProviderFactory } from './providers/openai/provider.js';
+import { providerFactory as openclawProviderFactory } from './providers/openclaw/provider.js';
 import { providerFactory as openrouterProviderFactory } from './providers/openrouter/provider.js';
 
 export * from './schemas/provider-factory.js';
@@ -23,6 +24,7 @@ export const CERTIFIED_PROVIDER_FACTORIES = [
   moonshotProviderFactory,
   ollamaProviderFactory,
   openaiProviderFactory,
+  openclawProviderFactory,
   openrouterProviderFactory,
 ] as const satisfies readonly ProviderFactoryModule[];
 

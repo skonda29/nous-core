@@ -10,6 +10,7 @@ import {
   CodexCliProvider,
   GitHubCopilotCliProvider,
   OllamaProvider,
+  OpenClawProvider,
   PROVIDER_DEFINITIONS,
   ProviderRegistry,
   buildAdapterResolver,
@@ -70,6 +71,7 @@ describe('provider definition to adapter to registry pipeline', () => {
       'moonshot',
       'ollama',
       'openai',
+      'openclaw',
       'openrouter',
     ]);
     expect(resolveProviderDefinition('anthropic').defaultModelId).toBe(
@@ -193,6 +195,7 @@ describe('provider definition to adapter to registry pipeline', () => {
       openai: ChatCompletionsProvider,
       groq: ChatCompletionsProvider,
       ollama: OllamaProvider,
+      openclaw: OpenClawProvider,
       openrouter: ChatCompletionsProvider,
     };
 
