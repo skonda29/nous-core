@@ -45,6 +45,11 @@ const expectedDefinitions = {
     defaultModelId: 'llama3.2',
     envVar: undefined,
   },
+  mistral: {
+    defaultEndpoint: 'https://api.mistral.ai',
+    defaultModelId: 'mistral-medium-latest',
+    envVar: 'MISTRAL_API_KEY',
+  },
 } as const;
 
 describe('provider definitions catalog', () => {
@@ -55,6 +60,7 @@ describe('provider definitions catalog', () => {
       'github-copilot-cli',
       'groq',
       'llama-cpp',
+      'mistral',
       'ollama',
       'openai',
     ]);
