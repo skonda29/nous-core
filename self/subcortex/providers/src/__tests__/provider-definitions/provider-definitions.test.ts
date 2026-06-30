@@ -55,6 +55,11 @@ const expectedDefinitions = {
     defaultModelId: 'meta-llama/Meta-Llama-3.1-70B-Instruct',
     envVar: 'DEEPINFRA_API_KEY',
   },
+  openclaw: {
+    defaultEndpoint: 'http://localhost',
+    defaultModelId: 'openclaw/default',
+    envVar: undefined,
+  },
 } as const;
 
 describe('provider definitions catalog', () => {
@@ -69,6 +74,7 @@ describe('provider definitions catalog', () => {
       'moonshot',
       'ollama',
       'openai',
+      'openclaw',
     ]);
   });
 
@@ -104,6 +110,7 @@ describe('provider definitions catalog', () => {
     const providerFiles = [
       join('providers', 'anthropic', 'implementation.ts'),
       join('providers', 'codex-cli', 'definition.ts'),
+      join('providers', 'openclaw', 'definition.ts'),
       join('protocols', 'openai-api', 'provider.ts'),
       join('providers', 'ollama', 'implementation.ts'),
       join('providers', 'llama-cpp', 'definition.ts'),

@@ -62,6 +62,7 @@ describe('adapter resolver', () => {
       'chat-completions',
       'ollama',
       'chat-completions',
+      'openclaw',
       'text',
     ]);
   });

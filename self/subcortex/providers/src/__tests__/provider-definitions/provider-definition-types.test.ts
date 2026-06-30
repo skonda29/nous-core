@@ -16,10 +16,10 @@ type Equal<A, B> =
 type Expect<T extends true> = T;
 
 type _ProviderVendorKeyIsExact = Expect<
-  Equal<ProviderVendorKey, 'anthropic' | 'codex-cli' | 'deepinfra' | 'github-copilot-cli' | 'groq' | 'llama-cpp' | 'moonshot' | 'openai' | 'ollama'>
+  Equal<ProviderVendorKey, 'anthropic' | 'codex-cli' | 'deepinfra' | 'github-copilot-cli' | 'groq' | 'llama-cpp' | 'moonshot' | 'openai' | 'ollama' | 'openclaw'>
 >;
 type _BootstrapProviderKeyIsExact = Expect<
-  Equal<BootstrapProviderKey, 'anthropic' | 'codex-cli' | 'deepinfra' | 'github-copilot-cli' | 'groq' | 'llama-cpp' | 'moonshot' | 'openai' | 'ollama'>
+  Equal<BootstrapProviderKey, 'anthropic' | 'codex-cli' | 'deepinfra' | 'github-copilot-cli' | 'groq' | 'llama-cpp' | 'moonshot' | 'openai' | 'ollama' | 'openclaw'>
 >;
 type _ProviderVendorKeyDoesNotWiden = Expect<Equal<string extends ProviderVendorKey ? true : false, false>>;
 
@@ -29,7 +29,7 @@ describe('provider definition type derivation', () => {
       (definition) => definition.vendorKey,
     );
 
-    expect(keys.sort()).toEqual(['anthropic', 'codex-cli', 'deepinfra', 'github-copilot-cli', 'groq', 'llama-cpp', 'moonshot', 'ollama', 'openai']);
+    expect(keys.sort()).toEqual(['anthropic', 'codex-cli', 'deepinfra', 'github-copilot-cli', 'groq', 'llama-cpp', 'moonshot', 'ollama', 'openai', 'openclaw']);
   });
 
   it('supports local leaf-addition fixtures without production branch logic', () => {

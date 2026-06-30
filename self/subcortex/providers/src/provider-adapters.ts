@@ -9,6 +9,7 @@ import { providerAdapter as llamaCppProviderAdapter } from './providers/llama-cp
 import { providerAdapter as moonshotProviderAdapter } from './providers/moonshot/adapter.js';
 import { providerAdapter as ollamaProviderAdapter } from './providers/ollama/adapter.js';
 import { providerAdapter as openaiProviderAdapter } from './providers/openai/adapter.js';
+import { providerAdapter as openclawProviderAdapter } from './providers/openclaw/adapter.js';
 
 export * from './schemas/provider-adapter.js';
 export { providerAdapter as anthropicAdapter, createAnthropicAdapter } from './providers/anthropic/adapter.js';
@@ -20,6 +21,7 @@ export { providerAdapter as llamaCppAdapter } from './providers/llama-cpp/adapte
 export { providerAdapter as moonshotAdapter } from './providers/moonshot/adapter.js';
 export { providerAdapter as ollamaAdapter, createOllamaAdapter, isToolCapableModel } from './providers/ollama/adapter.js';
 export { providerAdapter as openaiAdapter, createChatCompletionsAdapter } from './providers/openai/adapter.js';
+export { providerAdapter as openclawAdapter, OPENCLAW_EXECUTION_CAPABILITY_PROFILE, createOpenClawAdapter, renderOpenClawPrompt } from './providers/openclaw/adapter.js';
 
 export const CERTIFIED_PROVIDER_ADAPTER_MODULES = [
   anthropicProviderAdapter,
@@ -31,6 +33,7 @@ export const CERTIFIED_PROVIDER_ADAPTER_MODULES = [
   moonshotProviderAdapter,
   ollamaProviderAdapter,
   openaiProviderAdapter,
+  openclawProviderAdapter,
 ] as const satisfies readonly ProviderAdapterModule[];
 
 export type CertifiedProviderAdapterKey =

@@ -10,6 +10,7 @@ import { providerDefinition as llamaCppProviderDefinition } from './providers/ll
 import { providerDefinition as moonshotProviderDefinition } from './providers/moonshot/definition.js';
 import { providerDefinition as ollamaProviderDefinition } from './providers/ollama/definition.js';
 import { providerDefinition as openaiProviderDefinition } from './providers/openai/definition.js';
+import { providerDefinition as openclawProviderDefinition } from './providers/openclaw/definition.js';
 
 export * from './schemas/provider-definition.js';
 
@@ -23,6 +24,7 @@ const PROVIDER_DEFINITION_LEAVES = [
   moonshotProviderDefinition,
   ollamaProviderDefinition,
   openaiProviderDefinition,
+  openclawProviderDefinition,
 ] as const satisfies readonly ProviderDefinitionLeaf[];
 
 export const PROVIDER_DEFINITIONS = hydrateProviderDefinitions(PROVIDER_DEFINITION_LEAVES);
