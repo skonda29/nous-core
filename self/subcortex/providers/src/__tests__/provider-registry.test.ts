@@ -9,6 +9,7 @@ import { OllamaProvider } from '../providers/ollama/implementation.js';
 afterEach(() => {
   delete process.env.ANTHROPIC_API_KEY;
   delete process.env.OPENAI_API_KEY;
+  delete process.env.OPENROUTER_API_KEY;
   vi.restoreAllMocks();
 });
 
@@ -291,7 +292,7 @@ describe('ProviderRegistry', () => {
   });
 
   it('routes non-Anthropic remote providers to ChatCompletionsProvider inside LaneAwareProvider', () => {
-    process.env.OPENAI_API_KEY = 'test-openai-key';
+    process.env.OPENROUTER_API_KEY = 'test-openrouter-key';
 
     const registry = new ProviderRegistry({
       get: () => ({ providers: [] }),

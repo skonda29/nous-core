@@ -10,6 +10,7 @@ import {
   CodexCliProvider,
   GitHubCopilotCliProvider,
   OllamaProvider,
+  OpenClawProvider,
   PROVIDER_DEFINITIONS,
   ProviderRegistry,
   buildAdapterResolver,
@@ -52,6 +53,11 @@ function configFromDefinition(definition: (typeof PROVIDER_DEFINITIONS)[number])
 afterEach(() => {
   delete process.env.ANTHROPIC_API_KEY;
   delete process.env.OPENAI_API_KEY;
+  delete process.env.DEEPINFRA_API_KEY;
+  delete process.env.MOONSHOT_API_KEY;
+  delete process.env.GROQ_API_KEY;
+  delete process.env.HUGGINGFACE_API_KEY;
+  delete process.env.OPENROUTER_API_KEY;
 });
 
 describe('provider definition to adapter to registry pipeline', () => {
@@ -59,19 +65,24 @@ describe('provider definition to adapter to registry pipeline', () => {
     expect(PROVIDER_DEFINITIONS.map((definition) => definition.vendorKey)).toEqual([
       'anthropic',
       'codex-cli',
-      "github-copilot-cli",
-      "groq",
-      "huggingface-tgi",
-      "llama-cpp",
+      'deepinfra',
+      'github-copilot-cli',
+      'groq',
+      'huggingface-tgi',
+      'llama-cpp',
+      'moonshot',
       'ollama',
       'openai',
+      'openclaw',
+      'openrouter',
     ]);
     expect(resolveProviderDefinition('anthropic').defaultModelId).toBe(
       'claude-sonnet-4-20250514',
     );
     expect(resolveProviderDefinition('openai').adapterKey).toBe('chat-completions');
+    expect(resolveProviderDefinition('moonshot').adapterKey).toBe('chat-completions');
     expect(resolveProviderDefinition('ollama').auth.required).toBe(false);
-    expect(resolveProviderDefinition('huggingface-tgi').adapterKey).toBe('chat-completions')
+    expect(resolveProviderDefinition('huggingface-tgi').adapterKey).toBe('chat-completions');
   });
 
   it('makes a leaf provider definition discoverable through typed aggregation', () => {
@@ -133,6 +144,11 @@ describe('provider definition to adapter to registry pipeline', () => {
         expected: 'Chat response',
       },
       {
+        adapterKey: 'chat-completions',
+        output: { choices: [{ message: { content: 'DeepInfra response' } }] },
+        expected: 'DeepInfra response',
+      },
+      {
         adapterKey: 'codex-cli',
         output: 'Codex CLI response',
         expected: 'Codex CLI response',
@@ -166,19 +182,26 @@ describe('provider definition to adapter to registry pipeline', () => {
   it('constructs providers from registry-derived definitions with env-var credentials', () => {
     process.env.ANTHROPIC_API_KEY = 'test-anthropic-key';
     process.env.OPENAI_API_KEY = 'test-openai-key';
+    process.env.DEEPINFRA_API_KEY = 'test-deepinfra-key';
     process.env.HUGGINGFACE_API_KEY = 'test-huggingface-key';
+    process.env.MOONSHOT_API_KEY = 'test-moonshot-key';
     process.env.GROQ_API_KEY = 'test-groq-key';
+    process.env.OPENROUTER_API_KEY = 'test-openrouter-key';
 
     const registry = new ProviderRegistry(createEmptyConfig());
     const expectedClassByVendor = {
       anthropic: AnthropicProvider,
       'codex-cli': CodexCliProvider,
       'github-copilot-cli': GitHubCopilotCliProvider,
+      moonshot: ChatCompletionsProvider,
       'llama-cpp': ChatCompletionsProvider,
+      'deepinfra': ChatCompletionsProvider,
       openai: ChatCompletionsProvider,
       groq: ChatCompletionsProvider,
       ollama: OllamaProvider,
       'huggingface-tgi': ChatCompletionsProvider,
+      openclaw: OpenClawProvider,
+      openrouter: ChatCompletionsProvider,
     };
 
     for (const definition of PROVIDER_DEFINITIONS) {
@@ -200,9 +223,7 @@ describe('provider definition to adapter to registry pipeline', () => {
   it('skips auth-required providers without matching env vars and keeps Ollama credential-free', () => {
     const registry = new ProviderRegistry({
       get: () => ({
-        providers: PROVIDER_DEFINITIONS
-          .filter((definition) => definition.vendorKey !== 'huggingface-tgi')
-          .map(configFromDefinition),
+        providers: PROVIDER_DEFINITIONS.map(configFromDefinition),
       }),
       getSection: () => undefined,
       update: async () => undefined,
@@ -210,10 +231,16 @@ describe('provider definition to adapter to registry pipeline', () => {
     } as any);
 
     expect(registry.getProvider(resolveProviderDefinition('anthropic').wellKnownProviderId)).toBeNull();
+    expect(registry.getProvider(resolveProviderDefinition('deepinfra').wellKnownProviderId)).toBeNull();
     expect(registry.getProvider(resolveProviderDefinition('codex-cli').wellKnownProviderId)).toBeInstanceOf(
       LaneAwareProvider,
     );
     expect(registry.getProvider(resolveProviderDefinition('openai').wellKnownProviderId)).toBeNull();
+    expect(registry.getProvider(resolveProviderDefinition('moonshot').wellKnownProviderId)).toBeNull();
+    expect(registry.getProvider(resolveProviderDefinition('openrouter').wellKnownProviderId)).toBeNull();
+    expect(registry.getProvider(resolveProviderDefinition('huggingface-tgi').wellKnownProviderId)).toBeInstanceOf(
+      LaneAwareProvider,
+    );
     expect(registry.getProvider(resolveProviderDefinition('ollama').wellKnownProviderId)).toBeInstanceOf(
       LaneAwareProvider,
     );
