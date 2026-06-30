@@ -8,6 +8,7 @@ import {
   ChatCompletionsProvider,
   CERTIFIED_PROVIDER_FACTORIES,
   CodexCliProvider,
+  GeminiProvider,
   GitHubCopilotCliProvider,
   OllamaProvider,
   PROVIDER_DEFINITIONS,
@@ -54,6 +55,7 @@ afterEach(() => {
   delete process.env.OPENAI_API_KEY;
   delete process.env.MOONSHOT_API_KEY;
   delete process.env.GROQ_API_KEY;
+  delete process.env.GEMINI_API_KEY;
 });
 
 describe('provider definition to adapter to registry pipeline', () => {
@@ -62,6 +64,7 @@ describe('provider definition to adapter to registry pipeline', () => {
       'anthropic',
       'codex-cli',
       'deepinfra',
+      'gemini',
       'github-copilot-cli',
       'groq',
       'llama-cpp',
@@ -176,6 +179,7 @@ describe('provider definition to adapter to registry pipeline', () => {
     process.env.OPENAI_API_KEY = 'test-openai-key';
     process.env.MOONSHOT_API_KEY = 'test-moonshot-key';
     process.env.GROQ_API_KEY = 'test-groq-key';
+    process.env.GEMINI_API_KEY = 'test-gemini-key';
 
     const registry = new ProviderRegistry(createEmptyConfig());
     const expectedClassByVendor = {
@@ -185,6 +189,7 @@ describe('provider definition to adapter to registry pipeline', () => {
       moonshot: ChatCompletionsProvider,
       'llama-cpp': ChatCompletionsProvider,
       'deepinfra': ChatCompletionsProvider,
+      gemini: GeminiProvider,
       openai: ChatCompletionsProvider,
       groq: ChatCompletionsProvider,
       ollama: OllamaProvider,
