@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { ProviderDefinition } from '@nous/subcortex-providers';
-import { fetchProviderModels } from '../src/provider-model-discovery';
+import { resolveProviderDefinition } from '@nous/subcortex-providers';
+import { fetchProviderModels, testProviderApiKey } from '../src/provider-model-discovery';
 
 function providerDefinition(
   overrides: Partial<ProviderDefinition> = {},
@@ -77,6 +78,59 @@ describe('provider model discovery', () => {
         },
       ],
     });
+  });
+
+  it('parses OpenRouter-shaped responses that omit object/owned_by and carry extra fields', async () => {
+    // OpenRouter is OpenAI-compatible but returns richer model objects: no top-level
+    // `object`, and per-item `id`/`name`/`pricing`/… without `object` or `owned_by`.
+    const fetchImpl = vi.fn(async () => jsonResponse({
+      data: [
+        {
+          id: 'openai/gpt-4o',
+          name: 'OpenAI: GPT-4o',
+          created: 1,
+          context_length: 128000,
+          pricing: { prompt: '0', completion: '0' },
+        },
+        {
+          id: 'anthropic/claude-3.5-sonnet',
+          name: 'Anthropic: Claude 3.5 Sonnet',
+          created: 2,
+          context_length: 200000,
+          pricing: { prompt: '0', completion: '0' },
+        },
+      ],
+    }));
+
+    const result = await fetchProviderModels(
+      providerDefinition({
+        vendorKey: 'openrouter' as ProviderDefinition['vendorKey'],
+        displayName: 'OpenRouter',
+        defaultEndpoint: 'https://openrouter.ai/api',
+        defaultModelId: 'openrouter/auto',
+        modelListFormat: 'openai-models',
+      }),
+      'openrouter-key',
+      fetchImpl,
+    );
+
+    expect(result.cacheable).toBe(true);
+    expect(result.models).toEqual([
+      {
+        id: 'openrouter:openai/gpt-4o',
+        name: 'openai/gpt-4o',
+        provider: 'openrouter',
+        providerLabel: 'OpenRouter',
+        available: true,
+      },
+      {
+        id: 'openrouter:anthropic/claude-3.5-sonnet',
+        name: 'anthropic/claude-3.5-sonnet',
+        provider: 'openrouter',
+        providerLabel: 'OpenRouter',
+        available: true,
+      },
+    ]);
   });
 
   it('falls back to the provider default model when discovery fails', async () => {
@@ -177,5 +231,47 @@ describe('provider model discovery', () => {
       method: 'GET',
       headers: {},
     });
+  });
+});
+
+describe('testProviderApiKey', () => {
+  const openrouterDefinition = resolveProviderDefinition('openrouter');
+
+  it('validates OpenRouter keys against /v1/key and rejects invalid credentials', async () => {
+    const fetchImpl = vi.fn(async () => new Response('Unauthorized', { status: 401 }));
+
+    const result = await testProviderApiKey(openrouterDefinition, 'bad-key', fetchImpl);
+
+    expect(fetchImpl).toHaveBeenCalledWith('https://openrouter.ai/api/v1/key', {
+      method: 'GET',
+      headers: {
+        Authorization: 'Bearer bad-key',
+      },
+    });
+    expect(result).toEqual({
+      valid: false,
+      error: 'HTTP 401: Unauthorized',
+    });
+  });
+
+  it('accepts valid OpenRouter keys when /v1/key returns 200', async () => {
+    const fetchImpl = vi.fn(async () => jsonResponse({
+      data: { label: 'sk-or-test' },
+    }));
+
+    const result = await testProviderApiKey(openrouterDefinition, 'good-key', fetchImpl);
+
+    expect(fetchImpl).toHaveBeenCalledWith('https://openrouter.ai/api/v1/key', {
+      method: 'GET',
+      headers: {
+        Authorization: 'Bearer good-key',
+      },
+    });
+    expect(result).toEqual({ valid: true, error: null });
+  });
+
+  it('prefers healthCheckEndpoint over the public model-list endpoint', () => {
+    expect(openrouterDefinition.healthCheckEndpoint).toBe('/v1/key');
+    expect(openrouterDefinition.modelListEndpoint).toBe('/v1/models');
   });
 });

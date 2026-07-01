@@ -49,17 +49,25 @@ function makeThrowingProvider() {
 
 describe('adapter resolver', () => {
   it('aggregates all canonical adapter modules', () => {
-    // `chat-completions` appears four times: the openai, groq, llama-cpp, and
-    // vllm leaves reuse the shared chat-completions adapter. The resolver keys
-    // modules by adapterKey, so the duplicates collapse to a single resolvable
-    // module.
+    // `chat-completions` appears multiple times: deepinfra, groq,
+    // huggingface-tgi, llama-cpp, moonshot, openai, openrouter, perplexity,
+    // and vllm all reuse the shared chat-completions adapter.
+    // The resolver keys modules by adapterKey, so the duplicates collapse to a single
+    // resolvable module. Order follows the generated CERTIFIED_PROVIDER_ADAPTER_MODULES
+    // (alphabetical by vendor) with the text fallback appended last.
     expect(ADAPTER_MODULES.map((module) => module.adapterKey)).toEqual([
       'anthropic',
       'codex-cli',
+      'chat-completions',
       'github-copilot-cli',
       'chat-completions',
       'chat-completions',
+      'chat-completions',
+      'chat-completions',
       'ollama',
+      'chat-completions',
+      'openclaw',
+      'chat-completions',
       'chat-completions',
       'chat-completions',
       'text',
@@ -98,7 +106,15 @@ describe('adapter resolver', () => {
   it('resolves current provider definition vendors', () => {
     expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'anthropic' }))).toBe('anthropic');
     expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'codex-cli' }))).toBe('codex-cli');
+    expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'deepinfra' }))).toBe('chat-completions');
+    expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'github-copilot-cli' }))).toBe('github-copilot-cli');
+    expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'groq' }))).toBe('chat-completions');
+    expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'llama-cpp' }))).toBe('chat-completions');
     expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'ollama' }))).toBe('ollama');
+    expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'moonshot' }))).toBe('chat-completions');
+    expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'openclaw' }))).toBe('openclaw');
+    expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'openrouter' }))).toBe('chat-completions');
+    expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'perplexity' }))).toBe('chat-completions');
   });
 
   it('falls back to name heuristic for non-catalog provider configs', () => {
