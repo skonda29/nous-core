@@ -14,6 +14,7 @@ import { providerDefinition as openaiProviderDefinition } from './providers/open
 import { providerDefinition as openclawProviderDefinition } from './providers/openclaw/definition.js';
 import { providerDefinition as openrouterProviderDefinition } from './providers/openrouter/definition.js';
 import { providerDefinition as perplexityProviderDefinition } from './providers/perplexity/definition.js';
+import { providerDefinition as vllmProviderDefinition } from './providers/vllm/definition.js';
 
 export * from './schemas/provider-definition.js';
 
@@ -31,6 +32,7 @@ const PROVIDER_DEFINITION_LEAVES = [
   openclawProviderDefinition,
   openrouterProviderDefinition,
   perplexityProviderDefinition,
+  vllmProviderDefinition,
 ] as const satisfies readonly ProviderDefinitionLeaf[];
 
 export const PROVIDER_DEFINITIONS = hydrateProviderDefinitions(PROVIDER_DEFINITION_LEAVES);

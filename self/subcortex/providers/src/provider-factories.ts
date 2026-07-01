@@ -13,6 +13,7 @@ import { providerFactory as openaiProviderFactory } from './providers/openai/pro
 import { providerFactory as openclawProviderFactory } from './providers/openclaw/provider.js';
 import { providerFactory as openrouterProviderFactory } from './providers/openrouter/provider.js';
 import { providerFactory as perplexityProviderFactory } from './providers/perplexity/provider.js';
+import { providerFactory as vllmProviderFactory } from './providers/vllm/provider.js';
 
 export * from './schemas/provider-factory.js';
 
@@ -30,6 +31,7 @@ export const CERTIFIED_PROVIDER_FACTORIES = [
   openclawProviderFactory,
   openrouterProviderFactory,
   perplexityProviderFactory,
+  vllmProviderFactory,
 ] as const satisfies readonly ProviderFactoryModule[];
 
 export type CertifiedProviderFactoryVendorKey =

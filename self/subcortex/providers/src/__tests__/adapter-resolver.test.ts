@@ -50,8 +50,8 @@ function makeThrowingProvider() {
 describe('adapter resolver', () => {
   it('aggregates all canonical adapter modules', () => {
     // `chat-completions` appears multiple times: deepinfra, groq,
-    // huggingface-tgi, llama-cpp, moonshot, openai, openrouter, and perplexity
-    // all reuse the shared chat-completions adapter.
+    // huggingface-tgi, llama-cpp, moonshot, openai, openrouter, perplexity,
+    // and vllm all reuse the shared chat-completions adapter.
     // The resolver keys modules by adapterKey, so the duplicates collapse to a single
     // resolvable module. Order follows the generated CERTIFIED_PROVIDER_ADAPTER_MODULES
     // (alphabetical by vendor) with the text fallback appended last.
@@ -67,6 +67,7 @@ describe('adapter resolver', () => {
       'ollama',
       'chat-completions',
       'openclaw',
+      'chat-completions',
       'chat-completions',
       'chat-completions',
       'text',

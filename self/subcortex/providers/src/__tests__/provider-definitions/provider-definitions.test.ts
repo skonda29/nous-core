@@ -75,6 +75,11 @@ const expectedDefinitions = {
     defaultModelId: 'sonar',
     envVar: 'PERPLEXITY_API_KEY',
   },
+  vllm: {
+    defaultEndpoint: 'http://localhost:8000',
+    defaultModelId: 'meta-llama/Llama-3.1-8B-Instruct',
+    envVar: 'VLLM_API_KEY',
+  },
 } as const;
 
 describe('provider definitions catalog', () => {
@@ -93,6 +98,7 @@ describe('provider definitions catalog', () => {
       'openclaw',
       'openrouter',
       'perplexity',
+      'vllm',
     ]);
   });
 
@@ -136,6 +142,7 @@ describe('provider definitions catalog', () => {
       join('providers', 'deepinfra', 'definition.ts'),
       join('providers', 'openrouter', 'definition.ts'),
       join('providers', 'perplexity', 'definition.ts'),
+      join('providers', 'vllm', 'definition.ts'),
     ];
     const forbidden = [
       /fetch/,

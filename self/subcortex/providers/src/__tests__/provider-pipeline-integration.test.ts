@@ -59,6 +59,7 @@ afterEach(() => {
   delete process.env.HUGGINGFACE_API_KEY;
   delete process.env.OPENROUTER_API_KEY;
   delete process.env.PERPLEXITY_API_KEY;
+  delete process.env.VLLM_API_KEY;
 });
 
 describe('provider definition to adapter to registry pipeline', () => {
@@ -77,6 +78,7 @@ describe('provider definition to adapter to registry pipeline', () => {
       'openclaw',
       'openrouter',
       'perplexity',
+      'vllm',
     ]);
     expect(resolveProviderDefinition('anthropic').defaultModelId).toBe(
       'claude-sonnet-4-20250514',
@@ -206,6 +208,7 @@ describe('provider definition to adapter to registry pipeline', () => {
       openclaw: OpenClawProvider,
       openrouter: ChatCompletionsProvider,
       perplexity: ChatCompletionsProvider,
+      vllm: ChatCompletionsProvider,
     };
 
     for (const definition of PROVIDER_DEFINITIONS) {
@@ -244,6 +247,9 @@ describe('provider definition to adapter to registry pipeline', () => {
     expect(registry.getProvider(resolveProviderDefinition('openrouter').wellKnownProviderId)).toBeNull();
     expect(registry.getProvider(resolveProviderDefinition('perplexity').wellKnownProviderId)).toBeNull();
     expect(registry.getProvider(resolveProviderDefinition('huggingface-tgi').wellKnownProviderId)).toBeInstanceOf(
+      LaneAwareProvider,
+    );
+    expect(registry.getProvider(resolveProviderDefinition('vllm').wellKnownProviderId)).toBeInstanceOf(
       LaneAwareProvider,
     );
     expect(registry.getProvider(resolveProviderDefinition('ollama').wellKnownProviderId)).toBeInstanceOf(
