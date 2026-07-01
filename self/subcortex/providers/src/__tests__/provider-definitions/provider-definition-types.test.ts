@@ -16,10 +16,10 @@ type Equal<A, B> =
 type Expect<T extends true> = T;
 
 type _ProviderVendorKeyIsExact = Expect<
-  Equal<ProviderVendorKey, 'anthropic' | 'codex-cli' | 'openai' | 'ollama'>
+  Equal<ProviderVendorKey, 'anthropic' | 'codex-cli' | 'openai' | 'ollama' | 'xai'>
 >;
 type _BootstrapProviderKeyIsExact = Expect<
-  Equal<BootstrapProviderKey, 'anthropic' | 'codex-cli' | 'openai' | 'ollama'>
+  Equal<BootstrapProviderKey, 'anthropic' | 'codex-cli' | 'openai' | 'ollama' | 'xai'>
 >;
 type _ProviderVendorKeyDoesNotWiden = Expect<Equal<string extends ProviderVendorKey ? true : false, false>>;
 
