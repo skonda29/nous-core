@@ -6,10 +6,15 @@ import { providerAdapter as deepinfraProviderAdapter } from './providers/deepinf
 import { providerAdapter as geminiProviderAdapter } from './providers/gemini/adapter.js';
 import { providerAdapter as githubCopilotCliProviderAdapter } from './providers/github-copilot-cli/adapter.js';
 import { providerAdapter as groqProviderAdapter } from './providers/groq/adapter.js';
+import { providerAdapter as huggingfaceTgiProviderAdapter } from './providers/huggingface-tgi/adapter.js';
 import { providerAdapter as llamaCppProviderAdapter } from './providers/llama-cpp/adapter.js';
 import { providerAdapter as moonshotProviderAdapter } from './providers/moonshot/adapter.js';
 import { providerAdapter as ollamaProviderAdapter } from './providers/ollama/adapter.js';
 import { providerAdapter as openaiProviderAdapter } from './providers/openai/adapter.js';
+import { providerAdapter as openclawProviderAdapter } from './providers/openclaw/adapter.js';
+import { providerAdapter as openrouterProviderAdapter } from './providers/openrouter/adapter.js';
+import { providerAdapter as perplexityProviderAdapter } from './providers/perplexity/adapter.js';
+import { providerAdapter as vllmProviderAdapter } from './providers/vllm/adapter.js';
 
 export * from './schemas/provider-adapter.js';
 export { providerAdapter as anthropicAdapter, createAnthropicAdapter } from './providers/anthropic/adapter.js';
@@ -18,10 +23,15 @@ export { providerAdapter as deepinfraAdapter } from './providers/deepinfra/adapt
 export { providerAdapter as geminiAdapter } from './providers/gemini/adapter.js';
 export { providerAdapter as githubCopilotCliAdapter } from './providers/github-copilot-cli/adapter.js';
 export { providerAdapter as groqAdapter } from './providers/groq/adapter.js';
+export { providerAdapter as huggingfaceTgiAdapter } from './providers/huggingface-tgi/adapter.js';
 export { providerAdapter as llamaCppAdapter } from './providers/llama-cpp/adapter.js';
 export { providerAdapter as moonshotAdapter } from './providers/moonshot/adapter.js';
 export { providerAdapter as ollamaAdapter, createOllamaAdapter, isToolCapableModel } from './providers/ollama/adapter.js';
 export { providerAdapter as openaiAdapter, createChatCompletionsAdapter } from './providers/openai/adapter.js';
+export { providerAdapter as openclawAdapter, OPENCLAW_EXECUTION_CAPABILITY_PROFILE, createOpenClawAdapter, renderOpenClawPrompt } from './providers/openclaw/adapter.js';
+export { providerAdapter as openrouterAdapter } from './providers/openrouter/adapter.js';
+export { providerAdapter as perplexityAdapter } from './providers/perplexity/adapter.js';
+export { providerAdapter as vllmAdapter } from './providers/vllm/adapter.js';
 
 export const CERTIFIED_PROVIDER_ADAPTER_MODULES = [
   anthropicProviderAdapter,
@@ -30,10 +40,15 @@ export const CERTIFIED_PROVIDER_ADAPTER_MODULES = [
   geminiProviderAdapter,
   githubCopilotCliProviderAdapter,
   groqProviderAdapter,
+  huggingfaceTgiProviderAdapter,
   llamaCppProviderAdapter,
   moonshotProviderAdapter,
   ollamaProviderAdapter,
   openaiProviderAdapter,
+  openclawProviderAdapter,
+  openrouterProviderAdapter,
+  perplexityProviderAdapter,
+  vllmProviderAdapter,
 ] as const satisfies readonly ProviderAdapterModule[];
 
 export type CertifiedProviderAdapterKey =

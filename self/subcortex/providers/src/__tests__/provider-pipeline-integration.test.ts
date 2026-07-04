@@ -11,6 +11,7 @@ import {
   GeminiProvider,
   GitHubCopilotCliProvider,
   OllamaProvider,
+  OpenClawProvider,
   PROVIDER_DEFINITIONS,
   ProviderRegistry,
   buildAdapterResolver,
@@ -53,9 +54,14 @@ function configFromDefinition(definition: (typeof PROVIDER_DEFINITIONS)[number])
 afterEach(() => {
   delete process.env.ANTHROPIC_API_KEY;
   delete process.env.OPENAI_API_KEY;
+  delete process.env.DEEPINFRA_API_KEY;
   delete process.env.MOONSHOT_API_KEY;
   delete process.env.GROQ_API_KEY;
   delete process.env.GEMINI_API_KEY;
+  delete process.env.HUGGINGFACE_API_KEY;
+  delete process.env.OPENROUTER_API_KEY;
+  delete process.env.PERPLEXITY_API_KEY;
+  delete process.env.VLLM_API_KEY;
 });
 
 describe('provider definition to adapter to registry pipeline', () => {
@@ -67,10 +73,15 @@ describe('provider definition to adapter to registry pipeline', () => {
       'gemini',
       'github-copilot-cli',
       'groq',
+      'huggingface-tgi',
       'llama-cpp',
       'moonshot',
       'ollama',
       'openai',
+      'openclaw',
+      'openrouter',
+      'perplexity',
+      'vllm',
     ]);
     expect(resolveProviderDefinition('anthropic').defaultModelId).toBe(
       'claude-sonnet-4-20250514',
@@ -78,6 +89,7 @@ describe('provider definition to adapter to registry pipeline', () => {
     expect(resolveProviderDefinition('openai').adapterKey).toBe('chat-completions');
     expect(resolveProviderDefinition('moonshot').adapterKey).toBe('chat-completions');
     expect(resolveProviderDefinition('ollama').auth.required).toBe(false);
+    expect(resolveProviderDefinition('huggingface-tgi').adapterKey).toBe('chat-completions');
   });
 
   it('makes a leaf provider definition discoverable through typed aggregation', () => {
@@ -177,9 +189,13 @@ describe('provider definition to adapter to registry pipeline', () => {
   it('constructs providers from registry-derived definitions with env-var credentials', () => {
     process.env.ANTHROPIC_API_KEY = 'test-anthropic-key';
     process.env.OPENAI_API_KEY = 'test-openai-key';
+    process.env.DEEPINFRA_API_KEY = 'test-deepinfra-key';
+    process.env.HUGGINGFACE_API_KEY = 'test-huggingface-key';
     process.env.MOONSHOT_API_KEY = 'test-moonshot-key';
     process.env.GROQ_API_KEY = 'test-groq-key';
     process.env.GEMINI_API_KEY = 'test-gemini-key';
+    process.env.OPENROUTER_API_KEY = 'test-openrouter-key';
+    process.env.PERPLEXITY_API_KEY = 'test-perplexity-key';
 
     const registry = new ProviderRegistry(createEmptyConfig());
     const expectedClassByVendor = {
@@ -193,6 +209,11 @@ describe('provider definition to adapter to registry pipeline', () => {
       openai: ChatCompletionsProvider,
       groq: ChatCompletionsProvider,
       ollama: OllamaProvider,
+      'huggingface-tgi': ChatCompletionsProvider,
+      openclaw: OpenClawProvider,
+      openrouter: ChatCompletionsProvider,
+      perplexity: ChatCompletionsProvider,
+      vllm: ChatCompletionsProvider,
     };
 
     for (const definition of PROVIDER_DEFINITIONS) {
@@ -222,11 +243,20 @@ describe('provider definition to adapter to registry pipeline', () => {
     } as any);
 
     expect(registry.getProvider(resolveProviderDefinition('anthropic').wellKnownProviderId)).toBeNull();
+    expect(registry.getProvider(resolveProviderDefinition('deepinfra').wellKnownProviderId)).toBeNull();
     expect(registry.getProvider(resolveProviderDefinition('codex-cli').wellKnownProviderId)).toBeInstanceOf(
       LaneAwareProvider,
     );
     expect(registry.getProvider(resolveProviderDefinition('openai').wellKnownProviderId)).toBeNull();
     expect(registry.getProvider(resolveProviderDefinition('moonshot').wellKnownProviderId)).toBeNull();
+    expect(registry.getProvider(resolveProviderDefinition('openrouter').wellKnownProviderId)).toBeNull();
+    expect(registry.getProvider(resolveProviderDefinition('perplexity').wellKnownProviderId)).toBeNull();
+    expect(registry.getProvider(resolveProviderDefinition('huggingface-tgi').wellKnownProviderId)).toBeInstanceOf(
+      LaneAwareProvider,
+    );
+    expect(registry.getProvider(resolveProviderDefinition('vllm').wellKnownProviderId)).toBeInstanceOf(
+      LaneAwareProvider,
+    );
     expect(registry.getProvider(resolveProviderDefinition('ollama').wellKnownProviderId)).toBeInstanceOf(
       LaneAwareProvider,
     );
