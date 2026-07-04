@@ -148,7 +148,7 @@ export class GeminiProvider implements IModelProvider {
 
     try {
       while (true) {
-        const { done, value } = await reader.read();
+        const { done, value } = await this.readStreamChunk(reader, request.abortSignal);
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
@@ -350,6 +350,51 @@ export class GeminiProvider implements IModelProvider {
     }
 
     return JSON.parse(payload) as GeminiGenerateResponse;
+  }
+
+  private async readStreamChunk(
+    reader: ReadableStreamDefaultReader<Uint8Array>,
+    abortSignal?: AbortSignal,
+  ): ReturnType<ReadableStreamDefaultReader<Uint8Array>['read']> {
+    if (abortSignal?.aborted) {
+      await reader.cancel().catch(() => undefined);
+      throw new NousError('Gemini request aborted.', 'ABORTED');
+    }
+
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    let abortHandler: (() => void) | undefined;
+
+    const boundedRead = new Promise<never>((_resolve, reject) => {
+      timeout = setTimeout(() => {
+        reject(new NousError(
+          `Gemini stream read timed out after ${this.timeoutMs}ms`,
+          'PROVIDER_UNAVAILABLE',
+          { failoverReasonCode: 'PRV-PROVIDER-UNAVAILABLE' },
+        ));
+        void reader.cancel(new DOMException('provider_timeout', 'AbortError'))
+          .catch(() => undefined);
+      }, this.timeoutMs);
+
+      if (abortSignal) {
+        abortHandler = () => {
+          reject(new NousError('Gemini request aborted.', 'ABORTED'));
+          void reader.cancel().catch(() => undefined);
+        };
+        abortSignal.addEventListener('abort', abortHandler, { once: true });
+      }
+    });
+
+    try {
+      return await Promise.race([
+        reader.read(),
+        boundedRead,
+      ]);
+    } finally {
+      if (timeout) clearTimeout(timeout);
+      if (abortSignal && abortHandler) {
+        abortSignal.removeEventListener('abort', abortHandler);
+      }
+    }
   }
 
   private async fetchWithTimeout(

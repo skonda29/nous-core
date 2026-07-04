@@ -288,6 +288,66 @@ describe('GeminiProvider', () => {
     ]);
   });
 
+  it('stream() times out stalled body reads after response headers arrive', async () => {
+    vi.useFakeTimers();
+    const cancel = vi.fn();
+    const provider = new GeminiProvider(
+      MOCK_CONFIG,
+      { apiKey: 'test-gemini-key', timeoutMs: 50 },
+    );
+    const stream = new ReadableStream<Uint8Array>({
+      cancel,
+    });
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(stream, { status: 200, headers: { 'Content-Type': 'text/event-stream' } }),
+    );
+
+    const iterator = provider.stream({
+      role: 'cortex-chat',
+      input: { prompt: 'Stall after headers.' },
+      traceId: TRACE_ID,
+    })[Symbol.asyncIterator]();
+
+    const read = iterator.next();
+    const expectation = expect(read).rejects.toMatchObject({
+      code: 'PROVIDER_UNAVAILABLE',
+      context: { failoverReasonCode: 'PRV-PROVIDER-UNAVAILABLE' },
+    });
+    await vi.advanceTimersByTimeAsync(50);
+
+    await expectation;
+    expect(cancel).toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it('stream() cancels the reader when caller aborts during body consumption', async () => {
+    const cancel = vi.fn();
+    const abortController = new AbortController();
+    const provider = new GeminiProvider(MOCK_CONFIG, { apiKey: 'test-gemini-key' });
+    const stream = new ReadableStream<Uint8Array>({
+      cancel,
+    });
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(stream, { status: 200, headers: { 'Content-Type': 'text/event-stream' } }),
+    );
+
+    const iterator = provider.stream({
+      role: 'cortex-chat',
+      input: { prompt: 'Abort after headers.' },
+      traceId: TRACE_ID,
+      abortSignal: abortController.signal,
+    })[Symbol.asyncIterator]();
+
+    const read = iterator.next();
+    await Promise.resolve();
+    abortController.abort();
+
+    await expect(read).rejects.toMatchObject({
+      code: 'ABORTED',
+    });
+    expect(cancel).toHaveBeenCalled();
+  });
+
   it('invoke() throws PROVIDER_AUTH_FAILED with PRV-AUTH-FAILURE on 403', async () => {
     const provider = new GeminiProvider(MOCK_CONFIG, { apiKey: 'bad-key' });
     vi.mocked(fetch).mockResolvedValue(new Response('forbidden', { status: 403 }));
