@@ -20,9 +20,19 @@ const expectedDefinitions = {
     defaultModelId: 'gpt-4o',
     envVar: 'OPENAI_API_KEY',
   },
+  moonshot: {
+    defaultEndpoint: 'https://api.moonshot.ai',
+    defaultModelId: 'kimi-k2.6',
+    envVar: 'MOONSHOT_API_KEY',
+  },
   'codex-cli': {
     defaultEndpoint: 'http://localhost',
     defaultModelId: 'codex-cli/default',
+    envVar: undefined,
+  },
+  ollama: {
+    defaultEndpoint: 'http://localhost:11434',
+    defaultModelId: 'llama3.2',
     envVar: undefined,
   },
   'github-copilot-cli': {
@@ -30,10 +40,10 @@ const expectedDefinitions = {
     defaultModelId: 'openai/gpt-4o-mini',
     envVar: undefined,
   },
-  ollama: {
-    defaultEndpoint: 'http://localhost:11434',
-    defaultModelId: 'llama3.2',
-    envVar: undefined,
+  'huggingface-tgi': {
+    defaultEndpoint: 'http://localhost:8080',
+    defaultModelId: 'deepseek-ai/DeepSeek-V3',
+    envVar: 'HUGGINGFACE_API_KEY',
   },
   groq: {
     defaultEndpoint: 'https://api.groq.com/openai',
@@ -50,6 +60,31 @@ const expectedDefinitions = {
     defaultModelId: 'qwen-code/default',
     envVar: undefined,
   },
+  deepinfra: {
+    defaultEndpoint: 'https://api.deepinfra.com/v1/openai',
+    defaultModelId: 'meta-llama/Meta-Llama-3.1-70B-Instruct',
+    envVar: 'DEEPINFRA_API_KEY',
+  },
+  openrouter: {
+    defaultEndpoint: 'https://openrouter.ai/api',
+    defaultModelId: 'openrouter/auto',
+    envVar: 'OPENROUTER_API_KEY',
+  },
+  openclaw: {
+    defaultEndpoint: 'http://localhost',
+    defaultModelId: 'openclaw/default',
+    envVar: undefined,
+  },
+  perplexity: {
+    defaultEndpoint: 'https://api.perplexity.ai',
+    defaultModelId: 'sonar',
+    envVar: 'PERPLEXITY_API_KEY',
+  },
+  vllm: {
+    defaultEndpoint: 'http://localhost:8000',
+    defaultModelId: 'meta-llama/Llama-3.1-8B-Instruct',
+    envVar: 'VLLM_API_KEY',
+  },
 } as const;
 
 describe('provider definitions catalog', () => {
@@ -57,12 +92,19 @@ describe('provider definitions catalog', () => {
     expect(PROVIDER_DEFINITIONS.map((definition) => definition.vendorKey).sort()).toEqual([
       'anthropic',
       'codex-cli',
+      'deepinfra',
       'github-copilot-cli',
       'groq',
+      'huggingface-tgi',
       'llama-cpp',
+      'moonshot',
       'ollama',
       'openai',
       'qwen-code',
+      'openclaw',
+      'openrouter',
+      'perplexity',
+      'vllm',
     ]);
   });
 
@@ -98,10 +140,16 @@ describe('provider definitions catalog', () => {
     const providerFiles = [
       join('providers', 'anthropic', 'implementation.ts'),
       join('providers', 'codex-cli', 'definition.ts'),
+      join('providers', 'openclaw', 'definition.ts'),
       join('protocols', 'openai-api', 'provider.ts'),
       join('providers', 'ollama', 'implementation.ts'),
+      join('providers', 'huggingface-tgi', 'definition.ts'),
       join('providers', 'llama-cpp', 'definition.ts'),
       join('providers', 'qwen-code', 'definition.ts'),
+      join('providers', 'deepinfra', 'definition.ts'),
+      join('providers', 'openrouter', 'definition.ts'),
+      join('providers', 'perplexity', 'definition.ts'),
+      join('providers', 'vllm', 'definition.ts'),
     ];
     const forbidden = [
       /fetch/,
@@ -111,7 +159,10 @@ describe('provider definitions catalog', () => {
 
     for (const file of providerFiles) {
       const source = readFileSync(join(providersSrcDir, file), 'utf8');
-      const definitionStart = source.indexOf('_PROVIDER_DEFINITION = {');
+      const namedDefinitionStart = source.indexOf('_PROVIDER_DEFINITION = {');
+      const definitionStart = namedDefinitionStart >= 0
+        ? namedDefinitionStart
+        : source.indexOf('providerDefinition = {');
       const definitionEnd = source.indexOf('} as const satisfies ProviderDefinitionLeaf;', definitionStart);
       expect(definitionStart).toBeGreaterThanOrEqual(0);
       expect(definitionEnd).toBeGreaterThan(definitionStart);

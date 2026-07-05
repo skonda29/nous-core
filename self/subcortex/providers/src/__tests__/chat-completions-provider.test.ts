@@ -43,6 +43,34 @@ describe('ChatCompletionsProvider', () => {
     process.env.OPENAI_API_KEY = orig;
   });
 
+  it('composes the default /v1/chat/completions path, overridable via completionsPath', async () => {
+    const okResponse = {
+      ok: true,
+      json: async () => ({ choices: [{ message: { content: 'hi' } }], usage: {} }),
+    } as Response;
+
+    const defaultProvider = new ChatCompletionsProvider(MOCK_CONFIG, { apiKey: 'k' });
+    vi.mocked(fetch).mockResolvedValue(okResponse);
+    await defaultProvider.invoke({
+      role: 'cortex-chat',
+      input: { prompt: 'hi' },
+      traceId: '00000000-0000-0000-0000-000000000002' as any,
+    });
+    expect(vi.mocked(fetch).mock.calls[0][0]).toBe('https://api.openai.com/v1/chat/completions');
+
+    vi.mocked(fetch).mockClear();
+    const customProvider = new ChatCompletionsProvider(
+      { ...MOCK_CONFIG, endpoint: 'https://api.perplexity.ai' },
+      { apiKey: 'k', completionsPath: '/chat/completions' },
+    );
+    await customProvider.invoke({
+      role: 'cortex-chat',
+      input: { prompt: 'hi' },
+      traceId: '00000000-0000-0000-0000-000000000002' as any,
+    });
+    expect(vi.mocked(fetch).mock.calls[0][0]).toBe('https://api.perplexity.ai/chat/completions');
+  });
+
   it('invoke() validates input — rejects invalid with ValidationError', async () => {
     const provider = new ChatCompletionsProvider(MOCK_CONFIG, {
       apiKey: 'test-key',
