@@ -84,9 +84,9 @@ describe('createMistralAdapter', () => {
   const adapter = createMistralAdapter();
 
   describe('capabilities', () => {
-    it('declares nativeToolUse and streaming; no cacheControl or extendedThinking', () => {
+    it('declares streaming; no nativeToolUse, cacheControl, or extendedThinking', () => {
       expect(adapter.capabilities).toEqual({
-        nativeToolUse: true,
+        nativeToolUse: false,
         cacheControl: false,
         extendedThinking: false,
         streaming: true,

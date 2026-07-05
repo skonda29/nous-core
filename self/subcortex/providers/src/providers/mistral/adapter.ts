@@ -24,7 +24,7 @@ import {
 } from '../../schemas/provider-adapter.js';
 
 const MISTRAL_CAPABILITIES: AdapterCapabilities = {
-  nativeToolUse: true,
+  nativeToolUse: false,
   cacheControl: false,
   extendedThinking: false,
   streaming: true,
@@ -69,7 +69,7 @@ function formatContextMessages(
     if (frame.role === 'user' || frame.role === 'assistant') {
       messages.push({ role: frame.role, content: frame.content });
     } else if (frame.role === 'system') {
-      messages.push({ role: 'user', content: frame.content });
+      messages.push({ role: 'system', content: frame.content });
     } else if (frame.role === 'tool') {
       if (frame.metadata?.tool_call_id) {
         messages.push({ role: 'tool', content: frame.content, tool_call_id: frame.metadata.tool_call_id as string });

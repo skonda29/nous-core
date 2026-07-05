@@ -49,7 +49,6 @@ export const MISTRAL_PROVIDER_DEFINITION = {
     streaming: true,
     cacheControl: false,
     extendedThinking: false,
-    nativeToolUse: true,
     modelListing: true,
   },
   isLocal: false,

@@ -70,7 +70,7 @@ describe('adapter resolver', () => {
     expect(resolveAdapter('chat-completions').capabilities.nativeToolUse).toBe(true);
     expect(resolveAdapter('codex-cli').capabilities.streaming).toBe(true);
     expect(resolveAdapter('github-copilot-cli').capabilities.nativeToolUse).toBe(false);
-    expect(resolveAdapter('mistral').capabilities.nativeToolUse).toBe(true);
+    expect(resolveAdapter('mistral').capabilities.nativeToolUse).toBe(false);
     expect(resolveAdapter('ollama').capabilities.extendedThinking).toBe(true);
     expect(resolveAdapter('text').capabilities.nativeToolUse).toBe(false);
   });
