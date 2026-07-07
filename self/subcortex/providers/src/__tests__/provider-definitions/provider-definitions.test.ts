@@ -60,6 +60,11 @@ const expectedDefinitions = {
     defaultModelId: 'meta-llama/Meta-Llama-3.1-70B-Instruct',
     envVar: 'DEEPINFRA_API_KEY',
   },
+  gemini: {
+    defaultEndpoint: 'https://generativelanguage.googleapis.com',
+    defaultModelId: 'gemini-2.5-flash',
+    envVar: 'GEMINI_API_KEY',
+  },
   openrouter: {
     defaultEndpoint: 'https://openrouter.ai/api',
     defaultModelId: 'openrouter/auto',
@@ -88,6 +93,7 @@ describe('provider definitions catalog', () => {
       'anthropic',
       'codex-cli',
       'deepinfra',
+      'gemini',
       'github-copilot-cli',
       'groq',
       'huggingface-tgi',
@@ -140,15 +146,12 @@ describe('provider definitions catalog', () => {
       join('providers', 'huggingface-tgi', 'definition.ts'),
       join('providers', 'llama-cpp', 'definition.ts'),
       join('providers', 'deepinfra', 'definition.ts'),
+      join('providers', 'gemini', 'implementation.ts'),
       join('providers', 'openrouter', 'definition.ts'),
       join('providers', 'perplexity', 'definition.ts'),
       join('providers', 'vllm', 'definition.ts'),
     ];
-    const forbidden = [
-      /fetch/,
-      /process\.env/,
-      /new (AnthropicProvider|ChatCompletionsProvider|OllamaProvider)/,
-    ];
+    const forbidden = [/fetch/, /process\.env/, /new \w+Provider/];
 
     for (const file of providerFiles) {
       const source = readFileSync(join(providersSrcDir, file), 'utf8');

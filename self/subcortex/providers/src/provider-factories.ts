@@ -3,6 +3,7 @@ import type { ProviderFactoryModule } from './schemas/provider-factory.js';
 import { providerFactory as anthropicProviderFactory } from './providers/anthropic/provider.js';
 import { providerFactory as codexCliProviderFactory } from './providers/codex-cli/provider.js';
 import { providerFactory as deepinfraProviderFactory } from './providers/deepinfra/provider.js';
+import { providerFactory as geminiProviderFactory } from './providers/gemini/provider.js';
 import { providerFactory as githubCopilotCliProviderFactory } from './providers/github-copilot-cli/provider.js';
 import { providerFactory as groqProviderFactory } from './providers/groq/provider.js';
 import { providerFactory as huggingfaceTgiProviderFactory } from './providers/huggingface-tgi/provider.js';
@@ -21,6 +22,7 @@ export const CERTIFIED_PROVIDER_FACTORIES = [
   anthropicProviderFactory,
   codexCliProviderFactory,
   deepinfraProviderFactory,
+  geminiProviderFactory,
   githubCopilotCliProviderFactory,
   groqProviderFactory,
   huggingfaceTgiProviderFactory,
