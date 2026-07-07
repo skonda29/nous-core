@@ -5,7 +5,7 @@ description: Phased rollout for the NueOS Cloud managed inference relay
 
 # Implementation Plan
 
-The managed inference relay should be implemented incrementally. The first version should prove the client-facing Nue Cloud provider path and a single backend route before adding full multi-provider optimization.
+The managed inference relay should be implemented incrementally. The first version should prove the client-facing Nue Cloud provider path and a single backend route before adding full multi-provider routing.
 
 ## Phase 1: Nue Cloud provider leaf and static backend
 
@@ -25,7 +25,7 @@ The managed inference relay should be implemented incrementally. The first versi
 - add basic fallback before stream start
 - record trace and usage events
 
-## Phase 3: Cloud supply connectors
+## Phase 3: Cloud provider connectors
 
 - implement Vertex AI connector
 - implement Bedrock connector
@@ -36,18 +36,18 @@ The managed inference relay should be implemented incrementally. The first versi
 ## Phase 4: Routing and catalog
 
 - add capability catalog
-- add pricing catalog
+- add capability and routing catalog
 - support model aliases
-- support tenant-tier routing
+- support tenant-policy routing
 - support provider health-aware routing
 - support region-aware routing
 
-## Phase 5: Billing and optimization
+## Phase 5: Usage Accounting and Routing Policy
 
-- add billing ledger integration
-- add provider cost reconciliation
-- add unit-economics dashboards
-- add route optimization
+- add usage ledger integration
+- add provider usage reconciliation
+- add usage and operations dashboards
+- add route health and policy evaluation
 - add tenant policy controls
 - add advanced fallback policies
 
@@ -61,5 +61,5 @@ The managed inference relay should be implemented incrementally. The first versi
 - Should Bedrock use Converse first or provider-specific InvokeModel calls?
 - Should managed provider routing be configurable per tenant?
 - Should tenants be able to opt out of specific backend providers?
-- Should BYOC Vertex/Bedrock/Azure be separate provider leaves or later enterprise features?
+- Should BYOC Vertex/Bedrock/Azure be separate provider leaves or tracked separately from the initial managed relay?
 - What prompt/response logging defaults should apply for NueOS Cloud subscriptions?

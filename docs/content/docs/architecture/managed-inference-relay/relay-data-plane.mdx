@@ -51,7 +51,7 @@ The relay should be low-overhead, but it is not a raw tunnel. It must preserve:
 - route auditability
 - provider error classification
 
-The relay should not expose provider credentials, reveal unnecessary provider internals, buffer entire streaming responses, perform broad model selection itself, or bypass tenant quota/billing enforcement.
+The relay should not expose provider credentials, reveal unnecessary provider internals, buffer entire streaming responses, perform broad model selection itself, or bypass tenant quota and usage-policy enforcement.
 
 ## Streaming behavior
 
