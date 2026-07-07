@@ -1,11 +1,11 @@
 ---
-title: Metering, Billing, and Observability
-description: Usage events, billing ledger, quota, tracing, security, and privacy requirements
+title: Usage Metering and Observability
+description: Usage events, usage ledger, quota, tracing, security, and privacy requirements
 ---
 
-# Metering, Billing, and Observability
+# Usage Metering and Observability
 
-The managed inference relay must emit reliable usage and trace data for tenant billing, quota enforcement, provider reconciliation, operations, and routing optimization.
+The managed inference relay must emit reliable usage and trace data for usage accounting, quota enforcement, provider usage reconciliation, operations, and route health evaluation.
 
 ## Usage events
 
@@ -21,8 +21,8 @@ Each request should emit usage events.
   "region": "us-central1",
   "input_tokens": 1200,
   "output_tokens": 800,
-  "estimated_provider_cost": 0.0021,
-  "billable_amount": 0.006,
+  "quota_units": 2000,
+  "metered_usage_units": 2000,
   "latency_ms": 1840,
   "status": "success"
 }
@@ -30,17 +30,17 @@ Each request should emit usage events.
 
 The usage ledger should support:
 
-- tenant billing
+- usage accounting
 - quota enforcement
-- cost tracking
-- provider reconciliation
+- usage tracking
+- provider usage reconciliation
 - abuse detection
-- routing optimization
+- route health evaluation
 - operational dashboards
 
-## Capability and pricing catalog
+## Capability and Routing Catalog
 
-Routing should use a model/provider catalog that tracks capabilities, regions, pricing, health, and quota state.
+Routing should use a model/provider catalog that tracks capabilities, regions, health, quota state, and policy constraints.
 
 Example catalog record:
 
@@ -48,7 +48,7 @@ Example catalog record:
 {
   "provider": "vertex-ai",
   "model": "gemini-2.5-flash",
-  "aliases": ["nue:auto", "nue:cheap", "nue:balanced"],
+  "aliases": ["nue:auto", "nue:cost-efficient", "nue:balanced"],
   "regions": ["us-central1", "us-east4"],
   "capabilities": {
     "streaming": true,
@@ -56,9 +56,8 @@ Example catalog record:
     "vision": true,
     "context_window": 1048576
   },
-  "pricing": {
-    "input_per_million_tokens": 0.30,
-    "output_per_million_tokens": 2.50
+  "usage_accounting": {
+    "token_metering": true
   },
   "latency_class": "low",
   "quality_tier": "balanced"
@@ -77,7 +76,7 @@ The system should expose:
 - token usage
 - provider error classification
 - tenant quota consumption
-- estimated cost
+- estimated resource usage
 - relay runtime metrics
 
 Observability should not expose provider secrets or unnecessary sensitive prompt content.

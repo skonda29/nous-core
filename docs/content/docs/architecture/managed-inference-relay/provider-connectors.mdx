@@ -32,7 +32,7 @@ A provider connector should:
 
 ## Vertex AI connector
 
-The Vertex connector should handle Google Cloud-specific supply concerns:
+The Vertex connector should handle Google Cloud integration concerns:
 
 - service account / ADC / workload identity auth
 - OAuth bearer token minting and refresh
@@ -40,11 +40,11 @@ The Vertex connector should handle Google Cloud-specific supply concerns:
 - Vertex OpenAI-compatible or native route selection
 - Google auth, quota, rate-limit, and model availability error classification
 
-Vertex is not just a static API-key provider. It should primarily be modeled as a managed supply connector for NueOS Cloud. A separate BYOC/BYOK provider leaf may be considered later for advanced users.
+Vertex is not just a static API-key provider. The initial architecture treats Vertex as a server-side connector because it has project, region, quota, and auth concerns beyond a static API key. A separate BYOC/BYOK provider leaf can be evaluated independently.
 
 ## Bedrock connector
 
-The Bedrock connector should handle AWS-specific supply concerns:
+The Bedrock connector should handle AWS integration concerns:
 
 - AWS IAM / STS credentials
 - SigV4 request signing
@@ -63,7 +63,7 @@ The Azure connector should handle Azure AI Foundry / Azure OpenAI concerns:
 
 ## Direct API connectors
 
-Direct API connectors may support providers such as OpenAI, Anthropic, Mistral, Groq, and Together AI. These connectors may be simpler than cloud substrate connectors, but they still run server-side for Nue-managed subscriptions.
+Direct API connectors may support providers such as OpenAI, Anthropic, Mistral, Groq, and Together AI. These connectors may be simpler than cloud substrate connectors, but they still run server-side for Nue-managed inference paths.
 
 ## Open-weight runtime connectors
 

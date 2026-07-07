@@ -5,14 +5,14 @@ description: Tenant authentication, model aliases, route decisions, sessions, an
 
 # Control Plane and Routing
 
-The control plane makes business-sensitive routing decisions before inference begins.
+The control plane makes policy-sensitive routing decisions before inference begins.
 
 ## Responsibilities
 
 The control plane owns:
 
 - tenant authentication
-- org/workspace/subscription resolution
+- org/workspace/entitlement resolution
 - quota checks
 - budget estimation
 - provider/model/region selection
@@ -28,14 +28,14 @@ Nue-managed models should be addressable by stable aliases:
 
 ```text
 nue:auto
-nue:cheap
+nue:cost-efficient
 nue:balanced
 nue:premium
 nue:code
 nue:reasoning
 ```
 
-An alias does not need to map one-to-one to a provider model. It may resolve differently depending on tenant tier, region, latency, provider health, current pricing, context window requirements, tool-use requirements, safety/compliance policy, and fallback availability.
+An alias does not need to map one-to-one to a provider model. It may resolve differently depending on plan entitlements, region, latency, provider health, cost constraints, context window requirements, tool-use requirements, safety/compliance policy, and fallback availability.
 
 Example resolution:
 
@@ -70,7 +70,10 @@ A route decision should be explicit and auditable.
   ],
   "max_input_tokens": 64000,
   "max_output_tokens": 4096,
-  "budget_cents": 12,
+  "usage_budget": {
+    "max_input_tokens": 64000,
+    "max_output_tokens": 4096
+  },
   "expires_at": "2026-07-07T12:00:00Z"
 }
 ```
@@ -87,7 +90,7 @@ The token should include:
 - route ID
 - selected provider/model/region
 - expiration
-- budget limits
+- usage limits
 - allowed operation
 - streaming permission
 - trace ID
@@ -107,7 +110,7 @@ Recommended properties:
 Routing policy may consider:
 
 - requested model alias
-- tenant subscription tier
+- tenant policy
 - max latency target
 - required context length
 - tool-use support
@@ -115,7 +118,7 @@ Routing policy may consider:
 - region/compliance constraints
 - provider health
 - provider quota
-- estimated cost
+- estimated resource usage
 - recent latency
 - fallback availability
 
