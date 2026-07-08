@@ -16,10 +16,10 @@ type Equal<A, B> =
 type Expect<T extends true> = T;
 
 type _ProviderVendorKeyIsExact = Expect<
-  Equal<ProviderVendorKey, 'anthropic' | 'codex-cli' | 'deepinfra' | 'github-copilot-cli' | 'groq' | 'huggingface-tgi' | 'llama-cpp' | 'moonshot' | 'openai' | 'ollama' | 'openclaw' | 'openrouter' | 'perplexity' | 'vllm' | 'qwen-code'>
+  Equal<ProviderVendorKey, 'anthropic' | 'codex-cli' | 'deepinfra' | 'gemini' | 'github-copilot-cli' | 'groq' | 'huggingface-tgi' | 'llama-cpp' | 'moonshot' | 'openai' | 'ollama' | 'openclaw' | 'openrouter' | 'perplexity' | 'vllm' | 'qwen-code'>
 >;
 type _BootstrapProviderKeyIsExact = Expect<
-  Equal<BootstrapProviderKey, 'anthropic' | 'codex-cli' | 'deepinfra' | 'github-copilot-cli' | 'groq' | 'huggingface-tgi' | 'llama-cpp' | 'moonshot' | 'openai' | 'ollama' | 'openclaw' | 'openrouter' | 'perplexity' | 'vllm' | 'qwen-code'>
+  Equal<BootstrapProviderKey, 'anthropic' | 'codex-cli' | 'deepinfra' | 'gemini' | 'github-copilot-cli' | 'groq' | 'huggingface-tgi' | 'llama-cpp' | 'moonshot' | 'openai' | 'ollama' | 'openclaw' | 'openrouter' | 'perplexity' | 'vllm' | 'qwen-code'>
 >;
 
 type _ProviderVendorKeyDoesNotWiden = Expect<Equal<string extends ProviderVendorKey ? true : false, false>>;
@@ -30,7 +30,7 @@ describe('provider definition type derivation', () => {
       (definition) => definition.vendorKey,
     );
 
-    expect(keys.sort()).toEqual(['anthropic', 'codex-cli', 'deepinfra', 'github-copilot-cli', 'groq', 'huggingface-tgi', 'llama-cpp', 'moonshot', 'ollama', 'openai', 'openclaw', 'openrouter', 'perplexity', 'vllm', 'qwen-code']);
+    expect(keys.sort()).toEqual(['anthropic', 'codex-cli', 'deepinfra', 'github-copilot-cli', 'groq', 'huggingface-tgi', 'llama-cpp', 'moonshot', 'ollama', 'openai', 'openclaw', 'openrouter', 'perplexity', 'vllm']);
   });
 
   it('supports local leaf-addition fixtures without production branch logic', () => {

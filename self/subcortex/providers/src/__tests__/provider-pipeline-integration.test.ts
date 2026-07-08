@@ -8,6 +8,7 @@ import {
   ChatCompletionsProvider,
   CERTIFIED_PROVIDER_FACTORIES,
   CodexCliProvider,
+  GeminiProvider,
   GitHubCopilotCliProvider,
   OllamaProvider,
   OpenClawProvider,
@@ -57,6 +58,7 @@ afterEach(() => {
   delete process.env.DEEPINFRA_API_KEY;
   delete process.env.MOONSHOT_API_KEY;
   delete process.env.GROQ_API_KEY;
+  delete process.env.GEMINI_API_KEY;
   delete process.env.HUGGINGFACE_API_KEY;
   delete process.env.OPENROUTER_API_KEY;
   delete process.env.PERPLEXITY_API_KEY;
@@ -69,6 +71,7 @@ describe('provider definition to adapter to registry pipeline', () => {
       'anthropic',
       'codex-cli',
       'deepinfra',
+      'gemini',
       'github-copilot-cli',
       'groq',
       'huggingface-tgi',
@@ -192,6 +195,7 @@ describe('provider definition to adapter to registry pipeline', () => {
     process.env.HUGGINGFACE_API_KEY = 'test-huggingface-key';
     process.env.MOONSHOT_API_KEY = 'test-moonshot-key';
     process.env.GROQ_API_KEY = 'test-groq-key';
+    process.env.GEMINI_API_KEY = 'test-gemini-key';
     process.env.OPENROUTER_API_KEY = 'test-openrouter-key';
     process.env.PERPLEXITY_API_KEY = 'test-perplexity-key';
 
@@ -203,6 +207,7 @@ describe('provider definition to adapter to registry pipeline', () => {
       moonshot: ChatCompletionsProvider,
       'llama-cpp': ChatCompletionsProvider,
       'deepinfra': ChatCompletionsProvider,
+      gemini: GeminiProvider,
       openai: ChatCompletionsProvider,
       groq: ChatCompletionsProvider,
       ollama: OllamaProvider,
