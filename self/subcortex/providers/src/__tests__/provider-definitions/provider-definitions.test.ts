@@ -87,7 +87,7 @@ const expectedDefinitions = {
   },
   xai: {
     defaultEndpoint: 'https://api.x.ai/v1',
-    defaultModelId: 'grok-2-1212',
+    defaultModelId: 'grok-4.3',
     envVar: 'XAI_API_KEY',
   },
 } as const;
