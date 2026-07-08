@@ -3,7 +3,7 @@ import type {
 } from '../../schemas/provider-definition.js';
 
 const DEFAULT_ENDPOINT = 'https://api.x.ai/v1';
-const DEFAULT_MODEL_ID = 'grok-2-1212';
+const DEFAULT_MODEL_ID = 'grok-4.3';
 
 export const providerDefinition = {
     vendorKey: 'xai',
