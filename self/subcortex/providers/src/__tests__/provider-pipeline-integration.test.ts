@@ -60,6 +60,7 @@ afterEach(() => {
   delete process.env.OPENROUTER_API_KEY;
   delete process.env.PERPLEXITY_API_KEY;
   delete process.env.VLLM_API_KEY;
+  delete process.env.XAI_API_KEY;
 });
 
 describe('provider definition to adapter to registry pipeline', () => {
@@ -79,6 +80,7 @@ describe('provider definition to adapter to registry pipeline', () => {
       'openrouter',
       'perplexity',
       'vllm',
+      'xai'
     ]);
     expect(resolveProviderDefinition('anthropic').defaultModelId).toBe(
       'claude-sonnet-4-20250514',
@@ -192,6 +194,7 @@ describe('provider definition to adapter to registry pipeline', () => {
     process.env.GROQ_API_KEY = 'test-groq-key';
     process.env.OPENROUTER_API_KEY = 'test-openrouter-key';
     process.env.PERPLEXITY_API_KEY = 'test-perplexity-key';
+    process.env.XAI_API_KEY = 'test-xai-key';
 
     const registry = new ProviderRegistry(createEmptyConfig());
     const expectedClassByVendor = {
@@ -209,6 +212,7 @@ describe('provider definition to adapter to registry pipeline', () => {
       openrouter: ChatCompletionsProvider,
       perplexity: ChatCompletionsProvider,
       vllm: ChatCompletionsProvider,
+      xai: ChatCompletionsProvider,
     };
 
     for (const definition of PROVIDER_DEFINITIONS) {

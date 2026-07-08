@@ -70,6 +70,7 @@ describe('adapter resolver', () => {
       'chat-completions',
       'chat-completions',
       'chat-completions',
+      'chat-completions',
       'text',
     ]);
   });
@@ -115,6 +116,7 @@ describe('adapter resolver', () => {
     expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'openclaw' }))).toBe('openclaw');
     expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'openrouter' }))).toBe('chat-completions');
     expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'perplexity' }))).toBe('chat-completions');
+    expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'xai' }))).toBe('chat-completions');
   });
 
   it('falls back to name heuristic for non-catalog provider configs', () => {

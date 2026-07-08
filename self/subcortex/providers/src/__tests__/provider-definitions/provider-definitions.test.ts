@@ -80,6 +80,11 @@ const expectedDefinitions = {
     defaultModelId: 'meta-llama/Llama-3.1-8B-Instruct',
     envVar: 'VLLM_API_KEY',
   },
+  xai: {
+    defaultEndpoint: 'https://api.x.ai/v1',
+    defaultModelId: 'grok-2-1212',
+    envVar: 'XAI_API_KEY',
+  },
 } as const;
 
 describe('provider definitions catalog', () => {
@@ -99,6 +104,7 @@ describe('provider definitions catalog', () => {
       'openrouter',
       'perplexity',
       'vllm',
+      'xai'
     ]);
   });
 
@@ -143,6 +149,7 @@ describe('provider definitions catalog', () => {
       join('providers', 'openrouter', 'definition.ts'),
       join('providers', 'perplexity', 'definition.ts'),
       join('providers', 'vllm', 'definition.ts'),
+      join('providers', 'xai', 'definition.ts'),
     ];
     const forbidden = [
       /fetch/,
