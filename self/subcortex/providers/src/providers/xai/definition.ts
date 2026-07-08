@@ -1,7 +1,6 @@
 import type { 
     ProviderDefinitionLeaf 
 } from '../../schemas/provider-definition.js';
-import { ProviderDefinition as tProviderDefinition} from '../../provider-definitions.js';
 
 const DEFAULT_ENDPOINT = 'https://api.x.ai/v1';
 const DEFAULT_MODEL_ID = 'grok-2-1212';

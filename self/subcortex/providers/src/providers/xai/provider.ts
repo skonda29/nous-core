@@ -8,7 +8,7 @@ export const providerFactory = {
     const apiKey = options?.apiKey ?? process.env.XAI_API_KEY;
     if (!apiKey) {
       throw new NousError(
-        'xAI API key required — set XAI_API_KEY or pass apiKey option',
+        'xAI API key required - set XAI_API_KEY or pass apiKey option',
         'PROVIDER_AUTH_FAILED',
         { failoverReasonCode: 'PRV-AUTH-FAILURE' },
       );
