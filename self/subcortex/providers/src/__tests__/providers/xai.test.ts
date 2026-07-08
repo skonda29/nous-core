@@ -12,6 +12,10 @@ import {
   providerDefinition,
   providerFactory,
 } from '../../providers/xai/index.js';
+import type { TraceId } from '@nous/shared';
+import { ADAPTER_RESOLVER } from '../../index.js';
+
+const TRACE_ID = '550e8400-e29b-41d4-a716-446655440199' as TraceId;
 
 describe('xAI Grok Provider Leaf Package Integration', () => {
   beforeEach(() => {
@@ -57,7 +61,6 @@ describe('xAI Grok Provider Leaf Package Integration', () => {
       const registeredDef = PROVIDER_DEFINITIONS.find(d => d.vendorKey === 'xai');
       const expectedId = deriveBuiltInProviderId('xai');
       
-      // Look at the hydrated registry entry where wellKnownProviderId / id are resolved
       expect(registeredDef?.wellKnownProviderId).toBe(expectedId);
       expect(registeredDef?.vendorKey).toBe('xai');
     });
@@ -103,6 +106,23 @@ describe('xAI Grok Provider Leaf Package Integration', () => {
       expect(() => {
         providerFactory.create(mockFactoryConfig);
       }).toThrow(/xAI API key required/i);
+    });
+  });
+
+  describe('Adapter Parsing', () => {
+    it('parses a Grok text response', () => {
+      const adapter = ADAPTER_RESOLVER.resolveAdapter(providerDefinition.adapterKey);
+      const parsed = adapter.parseResponse({
+        choices: [{ message: { role: 'assistant', content: 'Hello from Grok' } }],
+      }, TRACE_ID);
+      expect(parsed.response).toBe('Hello from Grok');
+      expect(parsed.contentType).toBe('text');
+    });
+
+    it('returns text fallback on malformed output without throwing', () => {
+      const adapter = ADAPTER_RESOLVER.resolveAdapter(providerDefinition.adapterKey);
+      expect(() => adapter.parseResponse({ unexpected: true }, TRACE_ID)).not.toThrow();
+      expect(adapter.parseResponse({ unexpected: true }, TRACE_ID).contentType).toBe('text');
     });
   });
 });
