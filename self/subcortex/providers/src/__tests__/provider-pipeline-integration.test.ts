@@ -10,6 +10,7 @@ import {
   CodexCliProvider,
   GeminiProvider,
   GitHubCopilotCliProvider,
+  MistralProvider,
   OllamaProvider,
   OpenClawProvider,
   PROVIDER_DEFINITIONS,
@@ -62,6 +63,7 @@ afterEach(() => {
   delete process.env.OPENROUTER_API_KEY;
   delete process.env.PERPLEXITY_API_KEY;
   delete process.env.VLLM_API_KEY;
+  delete process.env.MISTRAL_API_KEY;
 });
 
 describe('provider definition to adapter to registry pipeline', () => {
@@ -75,6 +77,7 @@ describe('provider definition to adapter to registry pipeline', () => {
       'groq',
       'huggingface-tgi',
       'llama-cpp',
+      'mistral',
       'moonshot',
       'ollama',
       'openai',
@@ -196,6 +199,7 @@ describe('provider definition to adapter to registry pipeline', () => {
     process.env.GEMINI_API_KEY = 'test-gemini-key';
     process.env.OPENROUTER_API_KEY = 'test-openrouter-key';
     process.env.PERPLEXITY_API_KEY = 'test-perplexity-key';
+    process.env.MISTRAL_API_KEY = 'test-mistral-key';
 
     const registry = new ProviderRegistry(createEmptyConfig());
     const expectedClassByVendor = {
@@ -208,6 +212,7 @@ describe('provider definition to adapter to registry pipeline', () => {
       gemini: GeminiProvider,
       openai: ChatCompletionsProvider,
       groq: ChatCompletionsProvider,
+      mistral: MistralProvider,
       ollama: OllamaProvider,
       'huggingface-tgi': ChatCompletionsProvider,
       openclaw: OpenClawProvider,
@@ -300,6 +305,7 @@ describe('provider definition to adapter to registry pipeline', () => {
     expect(resolver.resolveAdapter('missing').capabilities).toEqual(textAdapter.capabilities);
   });
 });
+
 
 describe('github-copilot-cli — role compatibility', () => {
   it('declares session_bound_command profile', () => {

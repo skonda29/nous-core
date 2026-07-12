@@ -9,6 +9,7 @@ import { providerDefinition as githubCopilotCliProviderDefinition } from './prov
 import { providerDefinition as groqProviderDefinition } from './providers/groq/definition.js';
 import { providerDefinition as huggingfaceTgiProviderDefinition } from './providers/huggingface-tgi/definition.js';
 import { providerDefinition as llamaCppProviderDefinition } from './providers/llama-cpp/definition.js';
+import { providerDefinition as mistralProviderDefinition } from './providers/mistral/definition.js';
 import { providerDefinition as moonshotProviderDefinition } from './providers/moonshot/definition.js';
 import { providerDefinition as ollamaProviderDefinition } from './providers/ollama/definition.js';
 import { providerDefinition as openaiProviderDefinition } from './providers/openai/definition.js';
@@ -28,6 +29,7 @@ const PROVIDER_DEFINITION_LEAVES = [
   groqProviderDefinition,
   huggingfaceTgiProviderDefinition,
   llamaCppProviderDefinition,
+  mistralProviderDefinition,
   moonshotProviderDefinition,
   ollamaProviderDefinition,
   openaiProviderDefinition,

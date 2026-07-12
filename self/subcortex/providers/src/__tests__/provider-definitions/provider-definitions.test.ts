@@ -85,6 +85,11 @@ const expectedDefinitions = {
     defaultModelId: 'meta-llama/Llama-3.1-8B-Instruct',
     envVar: 'VLLM_API_KEY',
   },
+  mistral: {
+    defaultEndpoint: 'https://api.mistral.ai',
+    defaultModelId: 'mistral-large-latest',
+    envVar: 'MISTRAL_API_KEY',
+  },
 } as const;
 
 describe('provider definitions catalog', () => {
@@ -98,6 +103,7 @@ describe('provider definitions catalog', () => {
       'groq',
       'huggingface-tgi',
       'llama-cpp',
+      'mistral',
       'moonshot',
       'ollama',
       'openai',
@@ -145,6 +151,7 @@ describe('provider definitions catalog', () => {
       join('providers', 'ollama', 'implementation.ts'),
       join('providers', 'huggingface-tgi', 'definition.ts'),
       join('providers', 'llama-cpp', 'definition.ts'),
+      join('providers', 'mistral', 'implementation.ts'),
       join('providers', 'deepinfra', 'definition.ts'),
       join('providers', 'gemini', 'implementation.ts'),
       join('providers', 'openrouter', 'definition.ts'),
