@@ -134,7 +134,7 @@ describe('createMistralAdapter', () => {
       expect(messages[2]).toEqual({ role: 'assistant', content: 'Hi!' });
     });
 
-    it('formats tool definitions to OpenAI function-call shape', () => {
+    it('does not emit tools in request body when nativeToolUse is false', () => {
       const input: AdapterFormatInput = {
         systemPrompt: 'test',
         context: [],
@@ -150,17 +150,8 @@ describe('createMistralAdapter', () => {
           },
         ],
       };
-      const result = adapter.formatRequest(input);
-      expect(result.input.tools).toEqual([
-        {
-          type: 'function',
-          function: {
-            name: 'search',
-            description: 'Search for files',
-            parameters: { type: 'object', properties: { query: { type: 'string' } } },
-          },
-        },
-      ]);
+       const result = adapter.formatRequest(input);
+      expect(result.input.tools).toBeUndefined();
     });
 
     it('omits tools key when no tool definitions are provided', () => {

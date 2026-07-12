@@ -4,8 +4,7 @@
  * Mistral's API is Chat Completions-compatible. This adapter handles:
  * - System prompt flattening (array segments joined, no cache_control).
  * - Context frame mapping to Chat Completions message roles.
- * - Tool definition formatting to OpenAI function-call shape.
- * - Response parsing for text content and tool_calls.
+ * - Response parsing for text content and tool_calls (defensive only).
  *
  * Do not copy Anthropic-specific constructs: no cache_control segments,
  * no thinking blocks, no top-level combinator flattening, no x-api-key header.
@@ -82,20 +81,7 @@ function formatContextMessages(
   return messages;
 }
 
-function formatToolDefinitions(
-  toolDefinitions?: readonly import('@nous/shared').ToolDefinition[],
-): Array<{ type: 'function'; function: { name: string; description: string; parameters: Record<string, unknown> } }> | undefined {
-  if (!toolDefinitions || toolDefinitions.length === 0) return undefined;
 
-  return toolDefinitions.map((tool) => ({
-    type: 'function' as const,
-    function: {
-      name: tool.name,
-      description: tool.description ?? '',
-      parameters: (tool.inputSchema as Record<string, unknown>) ?? { type: 'object', properties: {} },
-    },
-  }));
-}
 
 interface ChatCompletionsChoice {
   message?: {
@@ -179,7 +165,7 @@ export function createMistralAdapter(log?: ILogChannel): ProviderAdapter {
     formatRequest(input: AdapterFormatInput): AdapterFormattedRequest {
       const systemText = flattenSystemPrompt(input.systemPrompt);
       const contextMessages = formatContextMessages(input.context);
-      const tools = formatToolDefinitions(input.toolDefinitions);
+     
 
       const messages: ChatMessage[] = [
         { role: 'system', content: systemText },
@@ -188,9 +174,7 @@ export function createMistralAdapter(log?: ILogChannel): ProviderAdapter {
 
       const body: Record<string, unknown> = { messages };
 
-      if (tools) {
-        body.tools = tools;
-      }
+   
 
       if (input.modelRequirements) {
         body.model_profile = input.modelRequirements.profile;
