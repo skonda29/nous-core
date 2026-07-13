@@ -8,6 +8,7 @@ import { providerAdapter as githubCopilotCliProviderAdapter } from './providers/
 import { providerAdapter as groqProviderAdapter } from './providers/groq/adapter.js';
 import { providerAdapter as huggingfaceTgiProviderAdapter } from './providers/huggingface-tgi/adapter.js';
 import { providerAdapter as llamaCppProviderAdapter } from './providers/llama-cpp/adapter.js';
+import { providerAdapter as mistralProviderAdapter } from './providers/mistral/adapter.js';
 import { providerAdapter as moonshotProviderAdapter } from './providers/moonshot/adapter.js';
 import { providerAdapter as ollamaProviderAdapter } from './providers/ollama/adapter.js';
 import { providerAdapter as openaiProviderAdapter } from './providers/openai/adapter.js';
@@ -26,6 +27,7 @@ export { providerAdapter as githubCopilotCliAdapter } from './providers/github-c
 export { providerAdapter as groqAdapter } from './providers/groq/adapter.js';
 export { providerAdapter as huggingfaceTgiAdapter } from './providers/huggingface-tgi/adapter.js';
 export { providerAdapter as llamaCppAdapter } from './providers/llama-cpp/adapter.js';
+export { providerAdapter as mistralAdapter } from './providers/mistral/adapter.js';
 export { providerAdapter as moonshotAdapter } from './providers/moonshot/adapter.js';
 export { providerAdapter as ollamaAdapter, createOllamaAdapter, isToolCapableModel } from './providers/ollama/adapter.js';
 export { providerAdapter as openaiAdapter, createChatCompletionsAdapter } from './providers/openai/adapter.js';
@@ -44,6 +46,7 @@ export const CERTIFIED_PROVIDER_ADAPTER_MODULES = [
   groqProviderAdapter,
   huggingfaceTgiProviderAdapter,
   llamaCppProviderAdapter,
+  mistralProviderAdapter,
   moonshotProviderAdapter,
   ollamaProviderAdapter,
   openaiProviderAdapter,

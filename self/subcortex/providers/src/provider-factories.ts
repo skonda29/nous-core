@@ -8,6 +8,7 @@ import { providerFactory as githubCopilotCliProviderFactory } from './providers/
 import { providerFactory as groqProviderFactory } from './providers/groq/provider.js';
 import { providerFactory as huggingfaceTgiProviderFactory } from './providers/huggingface-tgi/provider.js';
 import { providerFactory as llamaCppProviderFactory } from './providers/llama-cpp/provider.js';
+import { providerFactory as mistralProviderFactory } from './providers/mistral/provider.js';
 import { providerFactory as moonshotProviderFactory } from './providers/moonshot/provider.js';
 import { providerFactory as ollamaProviderFactory } from './providers/ollama/provider.js';
 import { providerFactory as openaiProviderFactory } from './providers/openai/provider.js';
@@ -28,6 +29,7 @@ export const CERTIFIED_PROVIDER_FACTORIES = [
   groqProviderFactory,
   huggingfaceTgiProviderFactory,
   llamaCppProviderFactory,
+  mistralProviderFactory,
   moonshotProviderFactory,
   ollamaProviderFactory,
   openaiProviderFactory,
