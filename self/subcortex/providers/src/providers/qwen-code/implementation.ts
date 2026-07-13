@@ -317,12 +317,17 @@ export function resolveQwenCodeExecutable(
   const systemCandidates = candidates.filter((candidate) => !isNodeModulesBinCandidate(candidate));
 
   if (platform === 'win32') {
-    return systemCandidates.find((candidate) => candidate.toLowerCase().endsWith('.cmd'))
+    return systemCandidates.find((candidate) => !isWindowsShimPath(candidate))
       ?? systemCandidates[0]
       ?? executable;
   }
 
   return systemCandidates[0] ?? executable;
+}
+
+function isWindowsShimPath(candidate: string): boolean {
+  const lower = candidate.toLowerCase();
+  return lower.endsWith('.cmd') || lower.endsWith('.bat');
 }
 
 function resolveExecutableCandidates(
@@ -581,7 +586,19 @@ function resolveSpawnExecutable(
     readonly platform?: NodeJS.Platform;
   },
 ): string {
-  return resolveQwenCodeExecutable(executable, options);
+  const resolved = resolveQwenCodeExecutable(executable, options);
+  const platform = options.platform ?? process.platform;
+  if (platform === 'win32' && isWindowsShimPath(resolved)) {
+    throw new NousError(
+      `Qwen Code resolved to a Windows shim (${resolved}) that cannot be launched safely `
+        + `without a shell. Set ${QWEN_CODE_NOUS_BIN_ENV} or ${QWEN_CODE_BIN_ENV} to a directly `
+        + `executable Qwen Code binary or Node entrypoint (for example the qwen.js under `
+        + `node_modules or an installed qwen.exe).`,
+      'PROVIDER_UNAVAILABLE',
+      { provider: 'qwen-code', failureKind: 'spawn_error', executable: resolved },
+    );
+  }
+  return resolved;
 }
 
 function buildProcessEnv(

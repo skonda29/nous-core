@@ -387,6 +387,51 @@ describe('Qwen Code provider leaf', () => {
     })).toBe('C:\\tools\\qwen-generic.cmd');
   });
 
+  it('prefers a directly-spawnable Windows binary over a .cmd shim', () => {
+    const commandResolver: QwenCodeCommandResolver = (command, args) => {
+      expect(command).toBe('where.exe');
+      expect(args).toEqual(['qwen']);
+      return [
+        'C:\\Users\\dev\\AppData\\Roaming\\npm\\qwen.cmd',
+        'C:\\Program Files\\qwen\\qwen.exe',
+      ].join('\r\n');
+    };
+
+    expect(resolveQwenCodeExecutable('qwen', {
+      commandResolver,
+      platform: 'win32',
+    })).toBe('C:\\Program Files\\qwen\\qwen.exe');
+  });
+
+  it('fails with configuration guidance when only a Windows shim is launchable under shell:false', async () => {
+    const commandResolver: QwenCodeCommandResolver = () =>
+      'C:\\Users\\dev\\AppData\\Roaming\\npm\\qwen.cmd';
+    let spawnCalled = false;
+    const runner = createQwenCodeProcessRunner({
+      platform: 'win32',
+      commandResolver,
+      spawn: () => {
+        spawnCalled = true;
+        return createFakeChildProcess();
+      },
+    });
+
+    const result = await runner.run({
+      command: {
+        executable: 'qwen',
+        args: ['-p', 'hello qwen'],
+      },
+      input: 'hello qwen',
+      timeoutMs: 1_000,
+    });
+
+    expect(spawnCalled).toBe(false);
+    expect(result.ok).toBe(false);
+    expect(result.failure?.kind).toBe('spawn_error');
+    expect(result.failure?.message).toContain('NOUS_QWEN_CODE_BIN');
+    expect(result.failure?.message).toContain('QWEN_CODE_BIN');
+  });
+
   it('resolves default POSIX qwen away from workspace node_modules bin candidates', () => {
     const commandResolver: QwenCodeCommandResolver = (command, args) => {
       expect(command).toBe('which');
