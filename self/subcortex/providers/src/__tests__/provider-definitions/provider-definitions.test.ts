@@ -55,6 +55,11 @@ const expectedDefinitions = {
     defaultModelId: 'llama3.2',
     envVar: undefined,
   },
+  'qwen-code': {
+    defaultEndpoint: 'http://localhost',
+    defaultModelId: 'qwen-code/default',
+    envVar: undefined,
+  },
   deepinfra: {
     defaultEndpoint: 'https://api.deepinfra.com/v1/openai',
     defaultModelId: 'meta-llama/Meta-Llama-3.1-70B-Instruct',
@@ -107,6 +112,7 @@ describe('provider definitions catalog', () => {
       'moonshot',
       'ollama',
       'openai',
+      'qwen-code',
       'openclaw',
       'openrouter',
       'perplexity',
@@ -152,6 +158,7 @@ describe('provider definitions catalog', () => {
       join('providers', 'huggingface-tgi', 'definition.ts'),
       join('providers', 'llama-cpp', 'definition.ts'),
       join('providers', 'mistral', 'implementation.ts'),
+      join('providers', 'qwen-code', 'definition.ts'),
       join('providers', 'deepinfra', 'definition.ts'),
       join('providers', 'gemini', 'implementation.ts'),
       join('providers', 'openrouter', 'definition.ts'),

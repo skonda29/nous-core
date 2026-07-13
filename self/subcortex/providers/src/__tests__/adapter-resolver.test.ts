@@ -73,6 +73,11 @@ describe('adapter resolver', () => {
       'chat-completions',
       'chat-completions',
       'chat-completions',
+      'openclaw',
+      'chat-completions',
+      'chat-completions',
+      'chat-completions',
+      'qwen-code',
       'text',
     ]);
   });

@@ -13,6 +13,7 @@ import { providerDefinition as mistralProviderDefinition } from './providers/mis
 import { providerDefinition as moonshotProviderDefinition } from './providers/moonshot/definition.js';
 import { providerDefinition as ollamaProviderDefinition } from './providers/ollama/definition.js';
 import { providerDefinition as openaiProviderDefinition } from './providers/openai/definition.js';
+import { providerDefinition as qwenCodeProviderDefinition } from './providers/qwen-code/definition.js';
 import { providerDefinition as openclawProviderDefinition } from './providers/openclaw/definition.js';
 import { providerDefinition as openrouterProviderDefinition } from './providers/openrouter/definition.js';
 import { providerDefinition as perplexityProviderDefinition } from './providers/perplexity/definition.js';
@@ -33,6 +34,7 @@ const PROVIDER_DEFINITION_LEAVES = [
   moonshotProviderDefinition,
   ollamaProviderDefinition,
   openaiProviderDefinition,
+  qwenCodeProviderDefinition,
   openclawProviderDefinition,
   openrouterProviderDefinition,
   perplexityProviderDefinition,
