@@ -15,8 +15,9 @@ import { providerAdapter as openaiProviderAdapter } from './providers/openai/ada
 import { providerAdapter as openclawProviderAdapter } from './providers/openclaw/adapter.js';
 import { providerAdapter as openrouterProviderAdapter } from './providers/openrouter/adapter.js';
 import { providerAdapter as perplexityProviderAdapter } from './providers/perplexity/adapter.js';
-import { providerAdapter as vllmProviderAdapter } from './providers/vllm/adapter.js';
 import { providerAdapter as qwenCodeProviderAdapter } from './providers/qwen-code/adapter.js';
+import { providerAdapter as vllmProviderAdapter } from './providers/vllm/adapter.js';
+import { providerAdapter as xaiProviderAdapter } from './providers/xai/adapter.js';
 
 export * from './schemas/provider-adapter.js';
 export { providerAdapter as anthropicAdapter, createAnthropicAdapter } from './providers/anthropic/adapter.js';
@@ -31,11 +32,12 @@ export { providerAdapter as mistralAdapter } from './providers/mistral/adapter.j
 export { providerAdapter as moonshotAdapter } from './providers/moonshot/adapter.js';
 export { providerAdapter as ollamaAdapter, createOllamaAdapter, isToolCapableModel } from './providers/ollama/adapter.js';
 export { providerAdapter as openaiAdapter, createChatCompletionsAdapter } from './providers/openai/adapter.js';
-export { providerAdapter as qwenCodeAdapter, QWEN_CODE_EXECUTION_CAPABILITY_PROFILE, createQwenCodeAdapter, renderQwenCodePrompt } from './providers/qwen-code/adapter.js';
 export { providerAdapter as openclawAdapter, OPENCLAW_EXECUTION_CAPABILITY_PROFILE, createOpenClawAdapter, renderOpenClawPrompt } from './providers/openclaw/adapter.js';
 export { providerAdapter as openrouterAdapter } from './providers/openrouter/adapter.js';
 export { providerAdapter as perplexityAdapter } from './providers/perplexity/adapter.js';
+export { providerAdapter as qwenCodeAdapter, QWEN_CODE_EXECUTION_CAPABILITY_PROFILE, createQwenCodeAdapter, renderQwenCodePrompt } from './providers/qwen-code/adapter.js';
 export { providerAdapter as vllmAdapter } from './providers/vllm/adapter.js';
+export { providerAdapter as xaiAdapter } from './providers/xai/adapter.js';
 
 export const CERTIFIED_PROVIDER_ADAPTER_MODULES = [
   anthropicProviderAdapter,
@@ -50,11 +52,12 @@ export const CERTIFIED_PROVIDER_ADAPTER_MODULES = [
   moonshotProviderAdapter,
   ollamaProviderAdapter,
   openaiProviderAdapter,
-  qwenCodeProviderAdapter,
   openclawProviderAdapter,
   openrouterProviderAdapter,
   perplexityProviderAdapter,
+  qwenCodeProviderAdapter,
   vllmProviderAdapter,
+  xaiProviderAdapter,
 ] as const satisfies readonly ProviderAdapterModule[];
 
 export type CertifiedProviderAdapterKey =

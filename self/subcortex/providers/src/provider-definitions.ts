@@ -13,11 +13,12 @@ import { providerDefinition as mistralProviderDefinition } from './providers/mis
 import { providerDefinition as moonshotProviderDefinition } from './providers/moonshot/definition.js';
 import { providerDefinition as ollamaProviderDefinition } from './providers/ollama/definition.js';
 import { providerDefinition as openaiProviderDefinition } from './providers/openai/definition.js';
-import { providerDefinition as qwenCodeProviderDefinition } from './providers/qwen-code/definition.js';
 import { providerDefinition as openclawProviderDefinition } from './providers/openclaw/definition.js';
 import { providerDefinition as openrouterProviderDefinition } from './providers/openrouter/definition.js';
 import { providerDefinition as perplexityProviderDefinition } from './providers/perplexity/definition.js';
+import { providerDefinition as qwenCodeProviderDefinition } from './providers/qwen-code/definition.js';
 import { providerDefinition as vllmProviderDefinition } from './providers/vllm/definition.js';
+import { providerDefinition as xaiProviderDefinition } from './providers/xai/definition.js';
 
 export * from './schemas/provider-definition.js';
 
@@ -34,11 +35,12 @@ const PROVIDER_DEFINITION_LEAVES = [
   moonshotProviderDefinition,
   ollamaProviderDefinition,
   openaiProviderDefinition,
-  qwenCodeProviderDefinition,
   openclawProviderDefinition,
   openrouterProviderDefinition,
   perplexityProviderDefinition,
+  qwenCodeProviderDefinition,
   vllmProviderDefinition,
+  xaiProviderDefinition,
 ] as const satisfies readonly ProviderDefinitionLeaf[];
 
 export const PROVIDER_DEFINITIONS = hydrateProviderDefinitions(PROVIDER_DEFINITION_LEAVES);
