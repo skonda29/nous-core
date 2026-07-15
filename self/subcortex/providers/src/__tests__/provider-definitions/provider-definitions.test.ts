@@ -86,7 +86,7 @@ const expectedDefinitions = {
     envVar: 'VLLM_API_KEY',
   },
   xai: {
-    defaultEndpoint: 'https://api.x.ai/v1',
+    defaultEndpoint: 'https://api.x.ai',
     defaultModelId: 'grok-4.3',
     envVar: 'XAI_API_KEY',
   },

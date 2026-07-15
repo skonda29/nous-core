@@ -81,8 +81,8 @@ describe('xAI Grok Provider Leaf Package Integration', () => {
   describe('Provider Factory Security Boundaries', () => {
     const mockFactoryConfig = {
       vendorKey: 'xai',
-      model: 'grok-2-1212',
-      defaultEndpoint: 'https://api.x.ai/v1',
+      model: 'grok-4.3',
+      defaultEndpoint: 'https://api.x.ai',
     } as any;
 
     it('should successfully instantiate ChatCompletionsProvider when an explicit key option is passed', () => {
