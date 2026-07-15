@@ -2,7 +2,7 @@ import type {
     ProviderDefinitionLeaf 
 } from '../../schemas/provider-definition.js';
 
-const DEFAULT_ENDPOINT = 'https://api.x.ai/v1';
+const DEFAULT_ENDPOINT = 'https://api.x.ai';
 const DEFAULT_MODEL_ID = 'grok-4.3';
 
 export const providerDefinition = {
