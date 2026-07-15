@@ -83,10 +83,10 @@ describe('provider definition to adapter to registry pipeline', () => {
       'moonshot',
       'ollama',
       'openai',
-      'qwen-code',
       'openclaw',
       'openrouter',
       'perplexity',
+      'qwen-code',
       'vllm',
       'xai'
     ]);
