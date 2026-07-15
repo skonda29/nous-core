@@ -51,7 +51,8 @@ describe('adapter resolver', () => {
   it('aggregates all canonical adapter modules', () => {
     // `chat-completions` appears multiple times: deepinfra, groq,
     // huggingface-tgi, llama-cpp, moonshot, openai, openrouter, perplexity,
-    // and vllm all reuse the shared chat-completions adapter.
+    // and vllm all reuse the shared chat-completions adapter. mistral uses
+    // its own adapterKey for resolver isolation.
     // The resolver keys modules by adapterKey, so the duplicates collapse to a single
     // resolvable module. Order follows the generated CERTIFIED_PROVIDER_ADAPTER_MODULES
     // (alphabetical by vendor) with the text fallback appended last.
@@ -64,12 +65,14 @@ describe('adapter resolver', () => {
       'chat-completions',
       'chat-completions',
       'chat-completions',
+      'mistral',
       'chat-completions',
       'ollama',
       'chat-completions',
       'openclaw',
-      'chat-completions',
-      'chat-completions',
+      'chat-completions',       
+      'chat-completions',        
+      'qwen-code',
       'chat-completions',
       'chat-completions',
       'text',
@@ -82,6 +85,7 @@ describe('adapter resolver', () => {
     expect(resolveAdapter('codex-cli').capabilities.streaming).toBe(true);
     expect(resolveAdapter('gemini').capabilities.streaming).toBe(true);
     expect(resolveAdapter('github-copilot-cli').capabilities.nativeToolUse).toBe(false);
+    expect(resolveAdapter('mistral').capabilities.nativeToolUse).toBe(false);
     expect(resolveAdapter('ollama').capabilities.extendedThinking).toBe(true);
     expect(resolveAdapter('text').capabilities.nativeToolUse).toBe(false);
   });
@@ -114,6 +118,7 @@ describe('adapter resolver', () => {
     expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'github-copilot-cli' }))).toBe('github-copilot-cli');
     expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'groq' }))).toBe('chat-completions');
     expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'llama-cpp' }))).toBe('chat-completions');
+    expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'mistral' }))).toBe('mistral');
     expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'ollama' }))).toBe('ollama');
     expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'moonshot' }))).toBe('chat-completions');
     expect(resolveAdapterKeyFromConfig(makeProvider({ vendor: 'openclaw' }))).toBe('openclaw');

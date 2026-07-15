@@ -55,6 +55,11 @@ const expectedDefinitions = {
     defaultModelId: 'llama3.2',
     envVar: undefined,
   },
+  'qwen-code': {
+    defaultEndpoint: 'http://localhost',
+    defaultModelId: 'qwen-code/default',
+    envVar: undefined,
+  },
   deepinfra: {
     defaultEndpoint: 'https://api.deepinfra.com/v1/openai',
     defaultModelId: 'meta-llama/Meta-Llama-3.1-70B-Instruct',
@@ -90,6 +95,11 @@ const expectedDefinitions = {
     defaultModelId: 'grok-4.3',
     envVar: 'XAI_API_KEY',
   },
+  mistral: {
+    defaultEndpoint: 'https://api.mistral.ai',
+    defaultModelId: 'mistral-large-latest',
+    envVar: 'MISTRAL_API_KEY',
+  },
 } as const;
 
 describe('provider definitions catalog', () => {
@@ -103,12 +113,14 @@ describe('provider definitions catalog', () => {
       'groq',
       'huggingface-tgi',
       'llama-cpp',
+      'mistral',
       'moonshot',
       'ollama',
       'openai',
       'openclaw',
       'openrouter',
       'perplexity',
+      'qwen-code',
       'vllm',
       'xai'
     ]);
@@ -151,6 +163,8 @@ describe('provider definitions catalog', () => {
       join('providers', 'ollama', 'implementation.ts'),
       join('providers', 'huggingface-tgi', 'definition.ts'),
       join('providers', 'llama-cpp', 'definition.ts'),
+      join('providers', 'mistral', 'implementation.ts'),
+      join('providers', 'qwen-code', 'definition.ts'),
       join('providers', 'deepinfra', 'definition.ts'),
       join('providers', 'gemini', 'implementation.ts'),
       join('providers', 'openrouter', 'definition.ts'),

@@ -9,9 +9,11 @@ import { providerDefinition as githubCopilotCliProviderDefinition } from './prov
 import { providerDefinition as groqProviderDefinition } from './providers/groq/definition.js';
 import { providerDefinition as huggingfaceTgiProviderDefinition } from './providers/huggingface-tgi/definition.js';
 import { providerDefinition as llamaCppProviderDefinition } from './providers/llama-cpp/definition.js';
+import { providerDefinition as mistralProviderDefinition } from './providers/mistral/definition.js';
 import { providerDefinition as moonshotProviderDefinition } from './providers/moonshot/definition.js';
 import { providerDefinition as ollamaProviderDefinition } from './providers/ollama/definition.js';
 import { providerDefinition as openaiProviderDefinition } from './providers/openai/definition.js';
+import { providerDefinition as qwenCodeProviderDefinition } from './providers/qwen-code/definition.js';
 import { providerDefinition as openclawProviderDefinition } from './providers/openclaw/definition.js';
 import { providerDefinition as openrouterProviderDefinition } from './providers/openrouter/definition.js';
 import { providerDefinition as perplexityProviderDefinition } from './providers/perplexity/definition.js';
@@ -29,9 +31,11 @@ const PROVIDER_DEFINITION_LEAVES = [
   groqProviderDefinition,
   huggingfaceTgiProviderDefinition,
   llamaCppProviderDefinition,
+  mistralProviderDefinition,
   moonshotProviderDefinition,
   ollamaProviderDefinition,
   openaiProviderDefinition,
+  qwenCodeProviderDefinition,
   openclawProviderDefinition,
   openrouterProviderDefinition,
   perplexityProviderDefinition,
